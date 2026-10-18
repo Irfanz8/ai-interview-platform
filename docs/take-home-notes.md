@@ -546,13 +546,14 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 - **Procedure & Recorded Git Artifacts:**
   1. **Clean Baseline Commit on Submission Branch:**
      - Branch: `feature/case-study-fullstack-irfan-aprilyana`
-     - Commit SHA: `031cdb4` (`fix(web): parse Rails ApiController error object array in OverridePanel and expand E2E tests`)
-     - Pre-Fault Test Run (`task-827`): `npm test` -> `10 passed (10)`.
+     - Commit SHA: `9ccdb66` (`chore: ignore Redis dump.rdb in root .gitignore`)
+     - Pre-Fault Test Run (`task-935`): `npm test` -> `10 passed (10)` in `4228ms`.
   2. **Scratch Branch Created:**
      - Branch: `scratch/seeded-fault-test-irfan-aprilyana`
   3. **Intentional Fault Seeded & Committed:**
-     - Change in [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx#L114-L118): Replaced `setNotFoundError(...)` in the `if (status === 404)` catch block with `await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId).catch(() => {}); setGenerating(true);`.
-  4. **Fault Test Execution & Captured Failure (`task-842`):**
+     - Commit SHA: `c935c2b` (`test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage`)
+     - Change in [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx#L120-L125): Replaced `setNotFoundError(...)` in the `if (status === 404)` catch block with `await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId).catch(() => {}); setGenerating(true);`.
+  4. **Fault Test Execution & Captured Failure (`task-947`):**
      - Command: `npm test` (`vitest run`)
      - Actual Output:
        ```text
@@ -562,18 +563,22 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
            360|       const alert = await screen.findByRole("alert");
            361|       expect(alert).toHaveTextContent(/not found in your workspace/i);
            362|       expect(portfoliosApi.triggerFitGap).not.toHaveBeenCalled();
+
        Test Files  1 failed (1)
             Tests  1 failed | 9 passed (10)
+           Errors  1 error
        ```
-  5. **Revert Commit on Scratch Branch & Recovery (`task-858`):**
-     - Post-Revert Test Run (`task-858`):
+  5. **Revert Commit on Scratch Branch & Recovery (`task-953`):**
+     - Revert Commit SHA: `f8f5ab5` (`Revert "test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage"`)
+     - Post-Revert Test Run (`task-953`):
        ```text
-       ✓ src/__tests__/evaluationWorkflow.test.tsx (10 tests) 3637ms
+       ✓ src/__tests__/evaluationWorkflow.test.tsx (10 tests) 2834ms
        Test Files  1 passed (1)
             Tests  10 passed (10)
+         Duration  9.02s
        ```
   6. **Returned to Clean Submission Branch:**
-     - Checked out `feature/case-study-fullstack-irfan-aprilyana` (`031cdb4`); scratch branch was cleaned up and never merged into the submission branch.
+     - Checked out `feature/case-study-fullstack-irfan-aprilyana` (`9ccdb66`); scratch branch was kept isolated and never merged into the submission branch.
 
 ---
 
