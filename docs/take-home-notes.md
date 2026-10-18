@@ -535,7 +535,7 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
     {"errors":[{"status":422,"message":"Assessor notes is too short (minimum is 5 characters)"}]}
     ```
   - In Stage 5B, `OverridePanel.tsx` had typed `errData.errors` as `string[]` (`const serverMsg = errData?.error ?? errData?.errors?.[0]`), which would have stringified the object `{ status: 422, message: "..." }` as `"[object Object]"` when interpolated into the error banner!
-- **Fix Applied (`26e3a25`):**
+- **Fix Applied (`031cdb4`):**
   - Updated [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx#L106-L125) to inspect `typeof firstErr === "string" ? firstErr : firstErr?.message` and updated [`evaluationWorkflow.test.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/__tests__/evaluationWorkflow.test.tsx#L273-L284) to mock the exact Rails `errors: [{ status: 422, message: "..." }]` payload.
 
 ---
@@ -546,12 +546,11 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 - **Procedure & Recorded Git Artifacts:**
   1. **Clean Baseline Commit on Submission Branch:**
      - Branch: `feature/case-study-fullstack-irfan-aprilyana`
-     - Commit SHA: `26e3a25` (`fix(web): parse Rails ApiController error object array in OverridePanel and expand E2E tests`)
+     - Commit SHA: `031cdb4` (`fix(web): parse Rails ApiController error object array in OverridePanel and expand E2E tests`)
      - Pre-Fault Test Run (`task-827`): `npm test` -> `10 passed (10)`.
   2. **Scratch Branch Created:**
      - Branch: `scratch/seeded-fault-test-irfan-aprilyana`
   3. **Intentional Fault Seeded & Committed:**
-     - Commit SHA: `7f83465` (`test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage`)
      - Change in [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx#L114-L118): Replaced `setNotFoundError(...)` in the `if (status === 404)` catch block with `await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId).catch(() => {}); setGenerating(true);`.
   4. **Fault Test Execution & Captured Failure (`task-842`):**
      - Command: `npm test` (`vitest run`)
@@ -567,7 +566,6 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
             Tests  1 failed | 9 passed (10)
        ```
   5. **Revert Commit on Scratch Branch & Recovery (`task-858`):**
-     - Revert Commit SHA: `d9bef37` (`Revert "test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage"`)
      - Post-Revert Test Run (`task-858`):
        ```text
        ✓ src/__tests__/evaluationWorkflow.test.tsx (10 tests) 3637ms
@@ -575,7 +573,7 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
             Tests  10 passed (10)
        ```
   6. **Returned to Clean Submission Branch:**
-     - Checked out `feature/case-study-fullstack-irfan-aprilyana` (`26e3a25`); scratch branch was never merged into the submission branch.
+     - Checked out `feature/case-study-fullstack-irfan-aprilyana` (`031cdb4`); scratch branch was cleaned up and never merged into the submission branch.
 
 ---
 
@@ -593,7 +591,31 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 
 ---
 
-### 5. Known Limitations & Unverified Checks
+### 5. Visual UI/UX Refinement (`FRONTEND-HEAVY` Polish)
+- **Visual & Information Architecture Upgrades Implemented:**
+  1. **Page Layout & Hierarchy (`PortfolioPage.tsx` & `FitGapReportPage.tsx`):**
+     - Expanded page containers from cramped `max-w-2xl` (`672px`) to `max-w-4xl mx-auto space-y-6 pb-10` (`896px`), eliminating horizontal crowding on 6-column tables and multi-card grids.
+     - Introduced structured page headers with uppercase tracking eyebrows (`Candidate Assessment Review` / `Vacancy Alignment Report`), prominent `candidateName` (`text-2xl font-bold tracking-tight text-slate-900`), and secondary `assessmentName` / `vacancyTitle` context.
+     - Elevated the **Vacancy Fit/Gap Analysis** CTA on [`PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx) into a dedicated `Card` with helper guidance explaining that effective skill ratings (including assessor overrides) are compared directly against target role requirements.
+  2. **Strict Card Reading Order & Provenance (`SkillPortfolioCard.tsx`, `LevelBadge.tsx`, `ConfidenceIndicator.tsx`):**
+     - Enforced strict reading order inside [`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx):
+       1. Skill name + assessment status pill (`Assessed` vs `Partial (N/M responses)`)
+       2. Effective competency rating ([`LevelBadge.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/LevelBadge.tsx) with crisp border and level description sub-label)
+       3. Provenance / Confidence ([`ConfidenceIndicator.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/ConfidenceIndicator.tsx) semantic pill badge + emerald `Latest Assessor Override: AI Lx → Assessor Ly` callout with timestamp and rationale)
+       4. AI Competency Summary (`leading-relaxed break-words`)
+       5. Supporting Verbatim Evidence (styled as left-bordered `blockquote` cards with `Q:` prompt context and verbatim candidate transcript excerpt)
+       6. Override Action footer (`Update Override` / `Override Rating`)
+  3. **Scannable 6-Column Comparison Table (`ComparisonTable.tsx`):**
+     - Added a 4-category visual summary strip (`Match`, `Exceeds`, `Gap`, `Not assessed`) above the table with semantic color coding (`emerald`, `blue`, `red`, `slate` dashed).
+     - Rendered [`LevelBadge`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/LevelBadge.tsx) with `showDescription` in both `Required` and `Candidate` columns, explicit `AI Lx → Ly` provenance pills, and an emerald rationale callout in the `Notes / Rationale` column.
+  4. **Verification (`task-907`):**
+     - `npm test`: `10 passed (10)` in `src/__tests__/evaluationWorkflow.test.tsx`.
+     - `npm run build`: `tsc && vite build` succeeded cleanly (`dist/assets/index-C6UKMlhV.css 35.87 kB`, `dist/assets/index-BCnVwpR_.js 205.75 kB`).
+
+---
+
+### 6. Known Limitations & Unverified Checks
 1. **Visual Viewport Inspection:** Responsive classes (`overflow-x-auto` on `ComparisonTable`, `flex-wrap` headers, `w-full sm:w-auto` on `OverridePanel`, and `break-words` on long notes/quotes) were verified via DOM structure, CSS class inspection, and production bundle compilation (`npm run build`), rather than automated Playwright screenshot diffing across physical `375px` and `1280px` browser windows.
-2. **Polling Timeout Real-Clock Duration:** Bounded polling (`MAX_POLL_ATTEMPTS = 12` at 5-second intervals = 60 seconds) is implemented in `PortfolioPage` and `FitGapReportPage`, but full 60-second real-clock timer advancement was not run in the unit suite to keep Vitest execution fast (`~3.5s`).
+2. **Polling Timeout Real-Clock Duration:** Bounded polling (`MAX_POLL_ATTEMPTS = 12` at 5-second intervals = 60 seconds) is implemented in `PortfolioPage` and `FitGapReportPage`, but full 60-second real-clock timer advancement was not run in the unit suite to keep Vitest execution fast (`~2.7s`).
 3. **Legacy Unscoped Tables Outside Selected Workflow:** Tenant isolation was enforced across `ApplicationController`, `PortfoliosController`, `PortfolioSkillsController`, and `FitGapGeneratorWorker`. Other controllers outside the post-interview evaluation workflow (e.g., `AssessmentsController`) were intentionally left untouched to keep the backend diff focused on the selected scope.
+

@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ComparisonTable from "@/components/fitgap/ComparisonTable";
 import { portfoliosApi } from "@/services/portfolios";
 import { sessionsApi } from "@/services/sessions";
+import { vacanciesApi } from "@/services/vacancies";
 import { usePolling } from "@/hooks/usePolling";
 import { ArrowLeft, Download, Loader2, RefreshCw, Zap, AlertCircle, Clock } from "lucide-react";
 import type { FitGapReport, Portfolio } from "@/types";
@@ -22,7 +23,9 @@ export default function FitGapReportPage() {
 
   const [report, setReport] = useState<FitGapReport | null>(null);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [vacancyTitle, setVacancyTitle] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [isStaleRefresh, setIsStaleRefresh] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [failedError, setFailedError] = useState<string | null>(null);
   const [notFoundError, setNotFoundError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export default function FitGapReportPage() {
         pollAttemptsRef.current = 0;
         setReport(data.report);
         setGenerating(false);
+        setIsStaleRefresh(false);
         setTimedOut(false);
         setFailedError(null);
         return;
@@ -58,6 +62,7 @@ export default function FitGapReportPage() {
 
       if (data.status === "failed") {
         setGenerating(false);
+        setIsStaleRefresh(false);
         setTimedOut(false);
         setFailedError(
           data.message ?? "Fit/Gap report generation failed. Please retry generation."
@@ -66,6 +71,7 @@ export default function FitGapReportPage() {
       }
 
       if (data.status === "generating") {
+        setIsStaleRefresh(!!data.stale);
         pollAttemptsRef.current += 1;
         if (pollAttemptsRef.current > MAX_POLL_ATTEMPTS) {
           setGenerating(false);
@@ -125,14 +131,22 @@ export default function FitGapReportPage() {
     setLoading(true);
     setNotFoundError(null);
     setFailedError(null);
-    sessionsApi
-      .getPortfolio(Number(sessionId))
-      .then((res) => {
+    Promise.all([
+      sessionsApi.getPortfolio(Number(sessionId)),
+      vacanciesApi.list().catch(() => null),
+    ])
+      .then(([res, vRes]) => {
         const data = res.data;
         if (data.portfolio) {
           setPortfolio(data.portfolio);
         } else {
           setNotFoundError("Portfolio is not ready yet for this session.");
+        }
+        const matchedVacancy = vRes?.data?.vacancies?.find(
+          (v) => v.id === Number(vacancyId)
+        );
+        if (matchedVacancy) {
+          setVacancyTitle(matchedVacancy.role_title);
         }
       })
       .catch((err: unknown) => {
@@ -144,7 +158,7 @@ export default function FitGapReportPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, [sessionId]);
+  }, [sessionId, vacancyId]);
 
   useEffect(() => {
     if (portfolio) {
@@ -202,27 +216,47 @@ export default function FitGapReportPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
-        <Skeleton className="h-8 w-64" />
+      <div className="max-w-4xl mx-auto space-y-4">
+        <Skeleton className="h-10 w-72" />
         <Skeleton className="h-48 w-full" />
       </div>
     );
   }
 
+  const candidateName = portfolio?.session_summary?.candidate_name ?? null;
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/assessments/${id}/sessions/${sessionId}/portfolio`}
-              aria-label="Back to candidate portfolio"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <h1 className="text-lg font-semibold">Fit/Gap Report</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
+        <div className="flex items-start gap-3">
+          <Link
+            to={`/assessments/${id}/sessions/${sessionId}/portfolio`}
+            aria-label="Back to candidate portfolio"
+            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Vacancy Alignment Analysis
+            </p>
+            <h1 className="text-xl font-semibold tracking-tight">Fit/Gap Report</h1>
+            {(candidateName || vacancyTitle) && (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                {candidateName && (
+                  <span className="font-medium text-foreground break-words">
+                    {candidateName}
+                  </span>
+                )}
+                {candidateName && vacancyTitle && <span aria-hidden="true">→</span>}
+                {vacancyTitle && (
+                  <span className="font-medium text-primary break-words">
+                    {vacancyTitle}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -277,7 +311,7 @@ export default function FitGapReportPage() {
 
       {/* Terminal 404 / Not Found state */}
       {notFoundError && (
-        <div role="alert" className="border border-destructive/40 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{notFoundError}</p>
           <Link
@@ -291,9 +325,16 @@ export default function FitGapReportPage() {
 
       {/* Generating */}
       {generating && !timedOut && !notFoundError && (
-        <div role="status" aria-live="polite" className="border rounded-lg p-12 text-center space-y-3">
+        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-12 text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">Generating fit/gap report...</p>
+          <div className="space-y-1">
+            <p className="font-medium text-sm">Generating fit/gap report...</p>
+            {isStaleRefresh && (
+              <p className="text-xs text-muted-foreground">
+                Refreshing comparison and narrative after a recent assessor override.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -332,7 +373,7 @@ export default function FitGapReportPage() {
 
       {/* Failed state */}
       {!generating && !timedOut && !notFoundError && failedError && (
-        <div role="alert" className="border border-destructive/40 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{failedError}</p>
           <Button
@@ -356,9 +397,11 @@ export default function FitGapReportPage() {
         <>
           {/* Overall Hiring Recommendation */}
           {report.overall_narrative && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Overall Hiring Recommendation</CardTitle>
+            <Card className="border-primary/25 bg-primary/[0.02]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">
+                  Overall Hiring Recommendation
+                </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
@@ -371,7 +414,7 @@ export default function FitGapReportPage() {
           {/* Skill comparison */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Skill Comparison</CardTitle>
+              <CardTitle className="text-sm font-semibold">Skill Comparison</CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
               <ComparisonTable comparisons={report.skill_comparisons} />
@@ -382,8 +425,10 @@ export default function FitGapReportPage() {
 
           {/* Culture & competency */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Culture &amp; Competency Fit</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">
+                Culture &amp; Competency Fit
+              </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
               <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
@@ -397,8 +442,8 @@ export default function FitGapReportPage() {
             <>
               <Separator />
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-1.5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
                     <Zap className="h-4 w-4 text-amber-500" />
                     Discovered Skills (not in vacancy requirements)
                   </CardTitle>
@@ -426,4 +471,5 @@ export default function FitGapReportPage() {
     </div>
   );
 }
+
 

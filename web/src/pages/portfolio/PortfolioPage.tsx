@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +12,17 @@ import { sessionsApi } from "@/services/sessions";
 import { vacanciesApi } from "@/services/vacancies";
 import { portfoliosApi } from "@/services/portfolios";
 import { usePolling } from "@/hooks/usePolling";
-import { ArrowLeft, Download, Loader2, RefreshCw, Zap, FileText, AlertCircle, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Loader2,
+  RefreshCw,
+  Zap,
+  FileText,
+  AlertCircle,
+  Clock,
+  Briefcase,
+} from "lucide-react";
 import type { Portfolio, AssessorOverride, Vacancy } from "@/types";
 
 const MAX_POLL_ATTEMPTS = 12;
@@ -31,6 +42,7 @@ export default function PortfolioPage() {
   const [selectedVacancy, setSelectedVacancy] = useState<string>("");
   const [exporting, setExporting] = useState<"pdf" | "json" | null>(null);
   const [candidateName, setCandidateName] = useState<string | null>(null);
+  const [assessmentName, setAssessmentName] = useState<string | null>(null);
 
   const pollAttemptsRef = useRef(0);
   const latestRequestIdRef = useRef(0);
@@ -116,6 +128,9 @@ export default function PortfolioPage() {
         if (sRes?.data?.session) {
           setCandidateName(sRes.data.session.candidate_name ?? null);
         }
+        if (sRes?.data?.assessment) {
+          setAssessmentName(sRes.data.assessment.name ?? null);
+        }
       })
       .finally(() => setLoading(false));
   }, [fetchPortfolio, sessionId]);
@@ -186,8 +201,8 @@ export default function PortfolioPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
-        <Skeleton className="h-8 w-64" />
+      <div className="max-w-4xl mx-auto space-y-4">
+        <Skeleton className="h-10 w-72" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -196,31 +211,46 @@ export default function PortfolioPage() {
 
   const configuredAssessedSkills = portfolio?.skills.filter((s) => !s.is_discovered) ?? [];
   const discoveredSkills = portfolio?.skills.filter((s) => s.is_discovered) ?? [];
+  const resolvedCandidateName =
+    candidateName || portfolio?.session_summary?.candidate_name || null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
+        <div className="flex items-start gap-3">
           <Link
             to={`/assessments/${id}/invite`}
             aria-label="Back to assessment invites"
-            className="text-muted-foreground hover:text-foreground"
+            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div>
-            <h1 className="text-lg font-semibold">Portfolio Results</h1>
-            {candidateName && (
-              <p className="text-sm text-muted-foreground break-words">{candidateName}</p>
-            )}
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Candidate Assessment Review
+            </p>
+            <h1 className="text-xl font-semibold tracking-tight">Portfolio Results</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {resolvedCandidateName && (
+                <span className="font-medium text-foreground break-words">
+                  {resolvedCandidateName}
+                </span>
+              )}
+              {resolvedCandidateName && assessmentName && (
+                <span aria-hidden="true">·</span>
+              )}
+              {assessmentName && (
+                <span className="break-words">{assessmentName}</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             to={`/assessments/${id}/sessions/${sessionId}/transcript`}
-            className="inline-flex items-center gap-1 text-sm border rounded-md px-3 py-1.5 hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium border rounded-md px-3 h-8 hover:bg-accent transition-colors"
           >
             <FileText className="h-3.5 w-3.5" />
             Transcript
@@ -260,7 +290,7 @@ export default function PortfolioPage() {
 
       {/* Not Found state */}
       {notFoundError && (
-        <div role="alert" className="border border-destructive/40 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{notFoundError}</p>
           <Link
@@ -274,7 +304,7 @@ export default function PortfolioPage() {
 
       {/* Generating state */}
       {generating && !timedOut && (
-        <div role="status" aria-live="polite" className="border rounded-lg p-12 text-center space-y-3">
+        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-12 text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
           <div>
             <p className="font-medium">Generating portfolio...</p>
@@ -320,7 +350,7 @@ export default function PortfolioPage() {
 
       {/* Failed state */}
       {!generating && !timedOut && !notFoundError && (failedError || portfolio?.generation_status === "failed") && (
-        <div role="alert" className="border border-destructive/40 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">
             {failedError ?? "Portfolio generation failed."}
@@ -350,25 +380,32 @@ export default function PortfolioPage() {
           )}
 
           {/* Configured skills */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold">
-              Assessed Configured Skills ({configuredAssessedSkills.length})
-            </h2>
+          <section aria-label="Assessed configured skills" className="space-y-3">
+            <div className="space-y-0.5">
+              <h2 className="text-sm font-semibold">
+                Assessed Configured Skills ({configuredAssessedSkills.length})
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Skills that reached 2+ interview probes with behavioral evidence. Assessors can override any AI rating with a documented rationale.
+              </p>
+            </div>
             {configuredAssessedSkills.length === 0 ? (
-              <div className="border border-dashed rounded-lg p-4 text-xs text-muted-foreground">
+              <div className="border border-dashed rounded-lg p-5 text-xs text-muted-foreground text-center">
                 No configured skills reached the minimum evidence threshold (2+ probes) during this session.
               </div>
             ) : (
-              configuredAssessedSkills.map((skill) => (
-                <SkillPortfolioCard
-                  key={skill.id}
-                  skill={skill}
-                  override={overrides[skill.id]}
-                  onOverrideSaved={(o) => handleOverrideSaved(skill.id, o)}
-                />
-              ))
+              <div className="space-y-3">
+                {configuredAssessedSkills.map((skill) => (
+                  <SkillPortfolioCard
+                    key={skill.id}
+                    skill={skill}
+                    override={overrides[skill.id]}
+                    onOverrideSaved={(o) => handleOverrideSaved(skill.id, o)}
+                  />
+                ))}
+              </div>
             )}
-          </div>
+          </section>
 
           {/* Unassessed configured skills */}
           {portfolio.unassessed_skills && portfolio.unassessed_skills.length > 0 && (
@@ -382,7 +419,7 @@ export default function PortfolioPage() {
           {discoveredSkills.length > 0 && (
             <>
               <Separator />
-              <div className="space-y-3">
+              <section aria-label="Discovered skills" className="space-y-3">
                 <div>
                   <h2 className="text-sm font-semibold flex items-center gap-1.5">
                     <Zap className="h-4 w-4 text-amber-500" />
@@ -392,50 +429,64 @@ export default function PortfolioPage() {
                     Skills the AI probed that were not in the original assessment
                   </p>
                 </div>
-                {discoveredSkills.map((skill) => (
-                  <SkillPortfolioCard
-                    key={skill.id}
-                    skill={skill}
-                    override={overrides[skill.id]}
-                    onOverrideSaved={(o) => handleOverrideSaved(skill.id, o)}
-                  />
-                ))}
-              </div>
+                <div className="space-y-3">
+                  {discoveredSkills.map((skill) => (
+                    <SkillPortfolioCard
+                      key={skill.id}
+                      skill={skill}
+                      override={overrides[skill.id]}
+                      onOverrideSaved={(o) => handleOverrideSaved(skill.id, o)}
+                    />
+                  ))}
+                </div>
+              </section>
             </>
           )}
 
           <Separator />
 
-          {/* Fit/Gap */}
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold">Vacancy Fit/Gap Analysis</h2>
-            {vacancies.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                No open vacancies available yet. Create a vacancy to run a Fit/Gap comparison.
-              </p>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
-                  <SelectTrigger className="w-full sm:w-64" aria-label="Select vacancy for Fit/Gap analysis">
-                    <SelectValue placeholder="Choose vacancy..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vacancies.map((v) => (
-                      <SelectItem key={v.id} value={String(v.id)}>
-                        {v.role_title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleRunFitGap} disabled={!selectedVacancy}>
-                  Run Fit/Gap Analysis →
-                </Button>
+          {/* Fit/Gap Next Action Card */}
+          <Card className="bg-muted/25">
+            <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold flex items-center gap-1.5">
+                  <Briefcase className="h-4 w-4 text-primary" aria-hidden="true" />
+                  Vacancy Fit/Gap Analysis
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Compare effective skill ratings (including any assessor overrides) against a target role&apos;s required levels.
+                </p>
               </div>
-            )}
-          </div>
+
+              {vacancies.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No open vacancies available yet. Create a vacancy to run a Fit/Gap comparison.
+                </p>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
+                    <SelectTrigger className="w-full sm:w-64 bg-background" aria-label="Select vacancy for Fit/Gap analysis">
+                      <SelectValue placeholder="Choose vacancy..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vacancies.map((v) => (
+                        <SelectItem key={v.id} value={String(v.id)}>
+                          {v.role_title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleRunFitGap} disabled={!selectedVacancy}>
+                    Run Fit/Gap Analysis →
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
   );
 }
+
 
