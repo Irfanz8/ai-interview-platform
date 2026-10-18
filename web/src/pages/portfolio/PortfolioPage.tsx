@@ -23,6 +23,7 @@ import {
   Clock,
   Briefcase,
 } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 import type { Portfolio, AssessorOverride, Vacancy } from "@/types";
 
 const MAX_POLL_ATTEMPTS = 12;
@@ -152,8 +153,10 @@ export default function PortfolioPage() {
       setFailedError(null);
       setTimedOut(false);
       setGenerating(true);
+      toast.info("Regenerating AI candidate portfolio...", "Portfolio");
     } catch {
       setFailedError("Could not trigger portfolio regeneration. Please try again.");
+      toast.error("Could not trigger portfolio regeneration.", "Error");
     } finally {
       setRetrying(false);
     }
@@ -194,6 +197,9 @@ export default function PortfolioPage() {
         a.click();
         URL.revokeObjectURL(url);
       }
+      toast.success(`Portfolio report downloaded as ${format.toUpperCase()}!`, "Export Complete");
+    } catch {
+      toast.error("Failed to export candidate portfolio.", "Export Error");
     } finally {
       setExporting(null);
     }

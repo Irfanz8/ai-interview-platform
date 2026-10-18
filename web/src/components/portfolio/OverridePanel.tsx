@@ -7,6 +7,7 @@ import LevelBadge from "./LevelBadge";
 import { portfoliosApi } from "@/services/portfolios";
 import { Loader2, Pencil } from "lucide-react";
 import { parseLevel } from "@/utils/constants";
+import { toast } from "@/components/ui/toast";
 import type { PortfolioSkill, AssessorOverride } from "@/types";
 
 interface OverridePanelProps {
@@ -103,6 +104,10 @@ export default function OverridePanel({
       onSaved(res.data.override);
       shouldRestoreFocusRef.current = true;
       setOpen(false);
+      toast.success(
+        `Rating updated to L${overrideLevel} for ${skill.skill_label || "skill"}.`,
+        "Override Saved"
+      );
     } catch (err: unknown) {
       const errData = (
         err as {
@@ -118,11 +123,11 @@ export default function OverridePanel({
       const serverMsg =
         errData?.error ??
         (typeof firstErr === "string" ? firstErr : firstErr?.message);
-      setSaveError(
-        serverMsg
-          ? `${serverMsg} (Your changes have been preserved.)`
-          : "Failed to save override. Your changes have been preserved—please try again."
-      );
+      const displayMsg = serverMsg
+        ? `${serverMsg} (Your changes have been preserved.)`
+        : "Failed to save override. Your changes have been preserved—please try again.";
+      setSaveError(displayMsg);
+      toast.error(serverMsg || "Failed to save override.", "Override Error");
     } finally {
       setSaving(false);
     }

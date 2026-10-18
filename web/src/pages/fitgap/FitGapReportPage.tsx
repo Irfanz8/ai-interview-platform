@@ -10,6 +10,7 @@ import { sessionsApi } from "@/services/sessions";
 import { vacanciesApi } from "@/services/vacancies";
 import { usePolling } from "@/hooks/usePolling";
 import { ArrowLeft, Download, Loader2, RefreshCw, Zap, AlertCircle, Clock } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 import type { FitGapReport, Portfolio } from "@/types";
 
 const MAX_POLL_ATTEMPTS = 12;
@@ -185,9 +186,11 @@ export default function FitGapReportPage() {
       pollAttemptsRef.current = 0;
       setReport(null);
       setGenerating(true);
+      toast.info("Regenerating vacancy alignment report...", "Fit/Gap Report");
     } catch {
       setGenerating(false);
       setFailedError("Failed to trigger Fit/Gap regeneration. Please try again.");
+      toast.error("Failed to trigger Fit/Gap regeneration.", "Error");
     } finally {
       setRegenerating(false);
     }
@@ -209,6 +212,9 @@ export default function FitGapReportPage() {
       a.download = `fitgap-${sessionId}-${vacancyId}.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
+      toast.success(`Fit/Gap report downloaded as ${format.toUpperCase()}!`, "Export Complete");
+    } catch {
+      toast.error("Export failed. Please try again.", "Export Error");
     } finally {
       setExporting(null);
     }
