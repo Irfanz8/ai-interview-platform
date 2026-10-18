@@ -84,35 +84,35 @@ export function Toaster() {
             key={t.id}
             role={isDestructive ? "alert" : "status"}
             className={cn(
-              "pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 animate-in fade-in-50 slide-in-from-bottom-5",
-              isDestructive && "border-red-200 bg-red-50/95 text-red-900 shadow-red-500/10",
-              isSuccess && "border-emerald-200 bg-emerald-50/95 text-emerald-900 shadow-emerald-500/10",
-              isWarning && "border-amber-200 bg-amber-50/95 text-amber-900 shadow-amber-500/10",
+              "pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-lg border p-3.5 shadow-md transition-all duration-150 animate-in fade-in-50 slide-in-from-bottom-2",
+              isDestructive && "border-red-200 bg-white text-red-900",
+              isSuccess && "border-emerald-200 bg-white text-slate-900",
+              isWarning && "border-amber-200 bg-white text-slate-900",
               (!t.variant || t.variant === "default" || t.variant === "info") &&
-                "border-slate-200 bg-white/95 text-slate-900 shadow-slate-900/10"
+                "border-slate-200 bg-white text-slate-900"
             )}
           >
             <div className="mt-0.5 shrink-0">
-              {isSuccess && <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" />}
-              {isDestructive && <AlertCircle className="h-5 w-5 text-red-600" aria-hidden="true" />}
-              {isWarning && <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />}
+              {isSuccess && <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+              {isDestructive && <AlertCircle className="h-4 w-4 text-red-600" aria-hidden="true" />}
+              {isWarning && <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />}
               {(!t.variant || t.variant === "default" || t.variant === "info") && (
-                <Info className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                <Info className="h-4 w-4 text-slate-700" aria-hidden="true" />
               )}
             </div>
 
-            <div className="flex-1 space-y-1">
-              {t.title && <p className="text-sm font-semibold leading-none">{t.title}</p>}
-              <p className="text-xs sm:text-sm font-normal leading-relaxed opacity-95">{t.description}</p>
+            <div className="flex-1 space-y-0.5">
+              {t.title && <p className="text-xs font-semibold leading-tight text-slate-900">{t.title}</p>}
+              <p className="text-xs font-normal leading-normal text-slate-600">{t.description}</p>
             </div>
 
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              className="shrink-0 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="shrink-0 rounded p-0.5 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-900"
               aria-label="Close notification"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         );

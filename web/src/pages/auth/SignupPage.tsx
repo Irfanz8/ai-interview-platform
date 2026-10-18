@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/toast";
-import { Sparkles, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, User, Shield } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const signupSchema = z.object({
   email: z
@@ -62,7 +62,7 @@ export default function SignupPage() {
       const token = res.data.token;
       saveToken(token);
       setAuth({ token });
-      toast.success("Account created successfully! Welcome aboard.", "Sign Up Successful");
+      toast.success("Account created successfully. Welcome aboard.", "Registered");
       navigate("/assessments");
     } catch (err: unknown) {
       const msg =
@@ -76,45 +76,50 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100/70 to-teal-50/40 p-4 sm:p-6 relative overflow-hidden">
-      {/* Decorative backdrop elements */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-teal-400/10 blur-[100px] rounded-full pointer-events-none" />
-
-      <div className="w-full max-w-md relative z-10 space-y-6">
-        {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 shadow-md shadow-teal-500/20 text-white mb-2">
-            <Sparkles className="h-6 w-6" />
+    <div className="min-h-screen w-full flex flex-col justify-between bg-[#FAFAFA] text-slate-900 font-sans selection:bg-slate-900 selection:text-white">
+      {/* Top minimal bar */}
+      <header className="w-full max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-xs tracking-wider">
+            R
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Create an Account
+          <span className="font-semibold text-sm tracking-tight text-slate-900">
+            Rakamin AI Interview
+          </span>
+        </div>
+      </header>
+
+      {/* Main Form Center */}
+      <main className="w-full max-w-[400px] mx-auto px-4 py-8 space-y-6">
+        <div className="space-y-1.5 text-center sm:text-left">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            Create an account
           </h1>
-          <p className="text-sm text-slate-600 max-w-xs mx-auto">
-            Get started with AI-driven interview assessments and candidate evaluation
+          <p className="text-xs text-slate-500">
+            Join your organization's workspace to manage candidate evaluations.
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/90 shadow-xl shadow-slate-200/60 rounded-2xl p-6 sm:p-8 space-y-6">
+        {/* Crisp Card */}
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 sm:p-7 space-y-5">
           {serverError && (
             <div
               role="alert"
-              className="flex items-start gap-3 p-3.5 rounded-xl border border-red-200 bg-red-50 text-red-900 text-xs sm:text-sm animate-in fade-in-50"
+              className="p-3 rounded-lg border border-red-200 bg-red-50/70 text-red-700 text-xs font-medium leading-relaxed"
             >
-              <div className="mt-0.5 shrink-0 text-red-600 font-bold">!</div>
-              <p className="leading-relaxed">{serverError}</p>
+              {serverError}
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* Email Field */}
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-semibold text-slate-700">
-                Email Address
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-xs font-medium text-slate-700">
+                Email address
               </Label>
               <div className="relative">
                 <Mail
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
                   aria-hidden="true"
                 />
                 <Input
@@ -124,27 +129,27 @@ export default function SignupPage() {
                   placeholder="name@company.com"
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? "signup-email-error" : undefined}
-                  className={`pl-10 h-11 text-sm bg-slate-50/50 border-slate-200 focus:bg-white transition-colors ${
+                  className={`pl-9 h-9 text-xs sm:text-sm bg-white border-slate-200 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 focus-visible:border-slate-900 transition-colors ${
                     errors.email ? "border-red-400 focus-visible:ring-red-400" : ""
                   }`}
                   {...register("email")}
                 />
               </div>
               {errors.email && (
-                <p id="signup-email-error" role="alert" className="text-xs font-medium text-red-600 mt-1">
+                <p id="signup-email-error" role="alert" className="text-[11px] font-medium text-red-600 mt-1">
                   {errors.email.message}
                 </p>
               )}
             </div>
 
             {/* Password Field */}
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-semibold text-slate-700">
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-xs font-medium text-slate-700">
                 Password
               </Label>
               <div className="relative">
                 <Lock
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
                   aria-hidden="true"
                 />
                 <Input
@@ -154,7 +159,7 @@ export default function SignupPage() {
                   placeholder="At least 6 characters"
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? "signup-password-error" : undefined}
-                  className={`pl-10 pr-10 h-11 text-sm bg-slate-50/50 border-slate-200 focus:bg-white transition-colors ${
+                  className={`pl-9 pr-9 h-9 text-xs sm:text-sm bg-white border-slate-200 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 focus-visible:border-slate-900 transition-colors ${
                     errors.password ? "border-red-400 focus-visible:ring-red-400" : ""
                   }`}
                   {...register("password")}
@@ -163,54 +168,48 @@ export default function SignupPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded focus:outline-none focus:ring-1 focus:ring-slate-900"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
               </div>
               {errors.password && (
-                <p id="signup-password-error" role="alert" className="text-xs font-medium text-red-600 mt-1">
+                <p id="signup-password-error" role="alert" className="text-[11px] font-medium text-red-600 mt-1">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-1.5 pt-1">
-              <Label className="text-xs font-semibold text-slate-700">Workspace Role</Label>
+            {/* Role selection */}
+            <div className="space-y-1 pt-1">
+              <Label className="text-xs font-medium text-slate-700">Role</Label>
               <RadioGroup
                 value={selectedRole}
                 onValueChange={(val) => setValue("role", val as "admin" | "user")}
-                className="grid grid-cols-2 gap-3"
+                className="grid grid-cols-2 gap-2.5"
               >
                 <label
                   htmlFor="role-user"
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                     selectedRole === "user"
-                      ? "border-teal-500 bg-teal-50/50 text-teal-900 shadow-sm"
-                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      ? "border-slate-900 bg-slate-50 font-medium text-slate-900"
+                      : "border-slate-200 hover:bg-slate-50 text-slate-600"
                   }`}
                 >
-                  <RadioGroupItem value="user" id="role-user" className="text-teal-600" />
-                  <div className="flex items-center gap-1.5 text-xs font-medium">
-                    <User className="h-3.5 w-3.5 text-slate-500" />
-                    <span>Assessor (User)</span>
-                  </div>
+                  <RadioGroupItem value="user" id="role-user" />
+                  <span>Assessor</span>
                 </label>
 
                 <label
                   htmlFor="role-admin"
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                     selectedRole === "admin"
-                      ? "border-teal-500 bg-teal-50/50 text-teal-900 shadow-sm"
-                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      ? "border-slate-900 bg-slate-50 font-medium text-slate-900"
+                      : "border-slate-200 hover:bg-slate-50 text-slate-600"
                   }`}
                 >
-                  <RadioGroupItem value="admin" id="role-admin" className="text-teal-600" />
-                  <div className="flex items-center gap-1.5 text-xs font-medium">
-                    <Shield className="h-3.5 w-3.5 text-slate-500" />
-                    <span>Admin</span>
-                  </div>
+                  <RadioGroupItem value="admin" id="role-admin" />
+                  <span>Admin</span>
                 </label>
               </RadioGroup>
             </div>
@@ -219,31 +218,33 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-11 font-semibold text-sm bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20 transition-all rounded-xl mt-3"
+              className="w-full h-9 font-medium text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition-colors mt-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
                   Creating account...
                 </>
               ) : (
-                <>
-                  Create Account
-                  <ArrowRight className="h-4 w-4 ml-1.5" />
-                </>
+                "Create account"
               )}
             </Button>
           </form>
         </div>
 
-        {/* Footer Links */}
+        {/* Footer info */}
         <p className="text-center text-xs text-slate-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-teal-700 hover:underline">
+          <Link to="/login" className="font-medium text-slate-900 hover:underline">
             Sign in
           </Link>
         </p>
-      </div>
+      </main>
+
+      {/* Footer bar */}
+      <footer className="w-full max-w-5xl mx-auto px-6 py-6 text-center text-xs text-slate-400">
+        <p>Enterprise candidate assessment platform with tenant data isolation.</p>
+      </footer>
     </div>
   );
 }
