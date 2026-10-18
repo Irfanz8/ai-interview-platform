@@ -270,8 +270,10 @@ describe("Evaluation Workflow — Stage 5B Frontend Verification", () => {
       expect(await screen.findByRole("alert")).toHaveTextContent(/at least 5 characters/i);
       expect(portfoliosApi.getOverride).not.toHaveBeenCalled();
 
-      // Simulate API error on valid input and verify notes are preserved
-      vi.mocked(portfoliosApi.getOverride).mockRejectedValueOnce(new Error("Network error"));
+      // Simulate API error on valid input with Rails ApiController error format and verify notes are preserved
+      vi.mocked(portfoliosApi.getOverride).mockRejectedValueOnce({
+        response: { data: { errors: [{ status: 422, message: "Database lock timeout" }] } },
+      });
 
       await user.clear(notesInput);
       await user.type(notesInput, "Candidate demonstrated strong distributed caching patterns.");
@@ -280,7 +282,7 @@ describe("Evaluation Workflow — Stage 5B Frontend Verification", () => {
       await user.click(saveBtn);
 
       expect(await screen.findByRole("alert")).toHaveTextContent(
-        /failed to save override\. your changes have been preserved/i
+        "Database lock timeout (Your changes have been preserved.)"
       );
       expect(notesInput).toHaveValue("Candidate demonstrated strong distributed caching patterns.");
 
@@ -523,5 +525,46 @@ describe("Evaluation Workflow — Stage 5B Frontend Verification", () => {
       expect(row).not.toBeNull();
       expect(within(row!).getAllByText("L4")).toHaveLength(2);
     });
+
+    it("renders sanitized failure message when FitGap status is failed and calls regenerateFitGap on Retry", async () => {
+      const user = userEvent.setup();
+      vi.mocked(sessionsApi.getPortfolio).mockResolvedValue(
+        mockAxiosResponse({ portfolio: samplePortfolio })
+      );
+      vi.mocked(portfoliosApi.getFitGap).mockResolvedValue(
+        mockAxiosResponse({
+          status: "failed",
+          error_code: "ai_service_timeout",
+          message: "The AI evaluation service timed out while generating this report. Please retry.",
+          report: null,
+        })
+      );
+      vi.mocked(portfoliosApi.regenerateFitGap).mockResolvedValue(
+        mockAxiosResponse({ status: "generating", message: "Fit/gap report regeneration queued" })
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/assessments/1/sessions/10/fitgap/7"]}>
+          <Routes>
+            <Route
+              path="/assessments/:id/sessions/:sessionId/fitgap/:vacancyId"
+              element={<FitGapReportPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(
+        "The AI evaluation service timed out while generating this report. Please retry."
+      );
+
+      const retryBtn = screen.getByRole("button", { name: /retry generation/i });
+      await user.click(retryBtn);
+
+      expect(portfoliosApi.regenerateFitGap).toHaveBeenCalledWith(55, 7);
+      expect(await screen.findByText(/generating fit\/gap report/i)).toBeInTheDocument();
+    });
   });
 });
+

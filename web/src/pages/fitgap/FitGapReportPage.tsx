@@ -86,7 +86,12 @@ export default function FitGapReportPage() {
           setTimedOut(false);
           setFailedError(null);
           try {
-            await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId);
+            const triggerRes = await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId);
+            if (requestId !== latestRequestIdRef.current) return;
+            if (triggerRes.data?.status === "ready" && triggerRes.data?.report) {
+              setReport(triggerRes.data.report);
+              setGenerating(false);
+            }
           } catch (triggerErr: unknown) {
             if (requestId !== latestRequestIdRef.current) return;
             const triggerStatus = (triggerErr as { response?: { status?: number } })?.response?.status;

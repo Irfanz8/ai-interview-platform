@@ -103,9 +103,25 @@ export default function OverridePanel({
       onSaved(res.data.override);
       shouldRestoreFocusRef.current = true;
       setOpen(false);
-    } catch {
+    } catch (err: unknown) {
+      const errData = (
+        err as {
+          response?: {
+            data?: {
+              error?: string;
+              errors?: Array<string | { message?: string }>;
+            };
+          };
+        }
+      )?.response?.data;
+      const firstErr = errData?.errors?.[0];
+      const serverMsg =
+        errData?.error ??
+        (typeof firstErr === "string" ? firstErr : firstErr?.message);
       setSaveError(
-        "Failed to save override. Your changes have been preserved—please try again."
+        serverMsg
+          ? `${serverMsg} (Your changes have been preserved.)`
+          : "Failed to save override. Your changes have been preserved—please try again."
       );
     } finally {
       setSaving(false);
