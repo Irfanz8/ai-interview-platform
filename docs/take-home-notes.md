@@ -508,3 +508,92 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 2. **TypeScript & Vite Production Build (`task-694`):**
    - Command: `npm run build` (`tsc && vite build`)
    - Result: Exited `0` (`1843 modules transformed, built in 22.10s` with zero TypeScript errors).
+
+---
+
+## Stage 5C: Verification and Evidence Collection (Declared Depth: `FRONTEND-HEAVY`)
+
+### 1. Acceptance-Criteria Verification Matrix
+
+| Criterion | Verification Method | Evidence | Status |
+| :--- | :--- | :--- | :--- |
+| **AC-01: Cross-Tenant Isolation & Zero Side Effects** | RSpec request specs + live E2E HTTP (`task-718`, `task-818`) | [`evaluation_workflow_spec.rb`](file:///e:/New%20folder/ai-interview-platform/api/spec/requests/api/v1/evaluation_workflow_spec.rb#L1-L150) (`3 examples, 0 failures`) & `[E2E-4] GET with mismatched X-Tenant-Scheme => HTTP 403 {"errors":[{"status":403,"message":"Unauthorized request"}]}`. Verified zero `AssessorOverride` rows created and zero `FitGapGeneratorWorker` jobs enqueued on cross-tenant requests. | **PASS** |
+| **AC-02: 4-Tier Assessment Semantics (`not_probed`, `insufficient_evidence`, `partial`, `covered`)** | RSpec request specs + live E2E HTTP + Vitest (`task-718`, `task-818`, `task-827`) | `[E2E-1] GET /sessions/7/portfolio => HTTP 200, configured=4, assessed=2, unassessed=2, reasons=["Incident Management:insufficient_evidence(1)", "Cloud Security:not_probed(0)"]`; [`PortfolioPage`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx) & [`UnassessedSkillsSection`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/UnassessedSkillsSection.tsx) Vitest suite (`renders SessionCoverageBanner, assessed skills, and UnassessedSkillsSection distinguishing not_probed vs insufficient_evidence`). | **PASS** |
+| **AC-03: Session Coverage Context Banner** | Vitest behavioral test + component inspection (`task-827`) | [`SessionCoverageBanner.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SessionCoverageBanner.tsx) renders `2 of 4 configured skills assessed`, `Ended Early by Candidate`, `2m 0s`, and `role="progressbar"` (`aria-valuenow="2"`, `aria-valuemax="4"`). | **PASS** |
+| **AC-04: Assessor Override Rationale Validation ($\ge 5$ chars) & Provenance** | RSpec + live E2E HTTP + Vitest (`task-718`, `task-818`, `task-827`) | `[E2E-2a] POST /portfolio_skills/11/override (short note) => HTTP 422 {"errors":[{"status":422,"message":"Assessor notes is too short (minimum is 5 characters)"}]}`; `[E2E-2b] (valid note) => HTTP 201, db_override_level=4`. Frontend [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx) enforces client validation (`role="alert"`), preserves user input on failure, parses Rails `errors: [{ status, message }]` payloads, and [`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx) renders `Latest Assessor Override: AI L2 → Assessor L4`. | **PASS** |
+| **AC-05: Accessible Radio Group (`useId`) & Keyboard Focus Management** | Vitest behavioral test (`task-827`) | [`LevelRadio.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/assessment/LevelRadio.tsx) generates unique DOM `id`s (`new Set(ids).size === ids.length` across multiple simultaneous override panels). [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx) moves focus to rationale textarea on open, closes on `Escape`, and restores focus to trigger button. | **PASS** |
+| **AC-06: Fit/Gap Contract (`404` vs `not_generated` vs `generating` vs `failed` vs `ready`) & Deduplication** | RSpec + live E2E HTTP + Vitest + Seeded Fault Test (`task-718`, `task-818`, `task-842`) | `[E2E-3a] GET /portfolios/7/fitgap/6 (before report) => HTTP 200 {"status":"not_generated","report":null}`; `[E2E-3b] GET /portfolios/7/fitgap/999999 (missing parent vacancy) => HTTP 404`. [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx) treats `404` as terminal `not_found` without calling `triggerFitGap` (`POST /fitgap`), and calls `triggerFitGap` at most once per `(portfolioId, vacancyId)` on `not_generated`. | **PASS** |
+| **AC-07: Fit/Gap Table Columns (`Required`, Override Provenance, `Not assessed`) & Dual Narratives** | RSpec + live E2E HTTP + Vitest (`task-718`, `task-818`, `task-827`) | `[E2E-3c] comparisons=["Cloud Security:req=4,cand=,override=false,result=not_assessed,status=not_probed", "Incident Management:req=3,cand=,override=false,result=not_assessed,status=insufficient_evidence", "System Design:req=3,cand=4,override=true,result=exceed,status=covered"]`. [`ComparisonTable.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/fitgap/ComparisonTable.tsx) renders `Required` (`L1–L5`), `AI L2 → L4` + `Override note`, `Insufficient evidence` vs `Not probed`, and all 4 summary counts. [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx) renders separate **Overall Hiring Recommendation** and **Culture & Competency Fit** cards. | **PASS** |
+| **AC-08: Sanitized Error Presentation & Bounded Polling Recovery** | RSpec + Vitest (`task-718`, `task-827`) | [`PortfoliosController#sanitize_generation_error`](file:///e:/New%20folder/ai-interview-platform/api/app/controllers/api/v1/portfolios_controller.rb#L353-L366) strips internal class/URL/key details; [`PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx) and [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx) display sanitized `role="alert"` banners with **Retry Generation** and pause polling after `MAX_POLL_ATTEMPTS = 12` with **Check Status** (`GET`) vs **Restart Generation** (`POST`). | **PASS** |
+
+---
+
+### 2. End-to-End Integration Bug Caught & Fixed in Stage 5C
+- **Finding during Live HTTP Verification (`task-792`):**
+  - When testing `POST /api/v1/portfolio_skills/:id/override` with a 2-character note (`"ok"`) against the live Rails server (`127.0.0.1:3001`), `ApiController#json_error` returned:
+    ```json
+    {"errors":[{"status":422,"message":"Assessor notes is too short (minimum is 5 characters)"}]}
+    ```
+  - In Stage 5B, `OverridePanel.tsx` had typed `errData.errors` as `string[]` (`const serverMsg = errData?.error ?? errData?.errors?.[0]`), which would have stringified the object `{ status: 422, message: "..." }` as `"[object Object]"` when interpolated into the error banner!
+- **Fix Applied (`26e3a25`):**
+  - Updated [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx#L106-L125) to inspect `typeof firstErr === "string" ? firstErr : firstErr?.message` and updated [`evaluationWorkflow.test.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/__tests__/evaluationWorkflow.test.tsx#L273-L284) to mock the exact Rails `errors: [{ status: 422, message: "..." }]` payload.
+
+---
+
+### 3. Seeded Fault Proof
+- **Protected Frontend Rule Selected:**
+  - `FitGapReportPage` must treat HTTP `404` on `GET /api/v1/portfolios/:id/fitgap/:vacancyId` as a terminal `not_found` state and must **never** auto-trigger `POST /api/v1/portfolios/:id/fitgap` (`portfoliosApi.triggerFitGap`) when `GET` returns `404`.
+- **Procedure & Recorded Git Artifacts:**
+  1. **Clean Baseline Commit on Submission Branch:**
+     - Branch: `feature/case-study-fullstack-irfan-aprilyana`
+     - Commit SHA: `26e3a25` (`fix(web): parse Rails ApiController error object array in OverridePanel and expand E2E tests`)
+     - Pre-Fault Test Run (`task-827`): `npm test` -> `10 passed (10)`.
+  2. **Scratch Branch Created:**
+     - Branch: `scratch/seeded-fault-test-irfan-aprilyana`
+  3. **Intentional Fault Seeded & Committed:**
+     - Commit SHA: `7f83465` (`test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage`)
+     - Change in [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx#L114-L118): Replaced `setNotFoundError(...)` in the `if (status === 404)` catch block with `await portfoliosApi.triggerFitGap(portfolio.id, targetVacancyId).catch(() => {}); setGenerating(true);`.
+  4. **Fault Test Execution & Captured Failure (`task-842`):**
+     - Command: `npm test` (`vitest run`)
+     - Actual Output:
+       ```text
+       FAIL src/__tests__/evaluationWorkflow.test.tsx > Evaluation Workflow — Stage 5B Frontend Verification > FitGapReportPage & ComparisonTable — Status Contract, Narratives & Table Columns > treats HTTP 404 from getFitGap as terminal not_found and never calls triggerFitGap
+       TestingLibraryElementError: Unable to find role="alert"
+        ❯ src/__tests__/evaluationWorkflow.test.tsx:360:34
+           360|       const alert = await screen.findByRole("alert");
+           361|       expect(alert).toHaveTextContent(/not found in your workspace/i);
+           362|       expect(portfoliosApi.triggerFitGap).not.toHaveBeenCalled();
+       Test Files  1 failed (1)
+            Tests  1 failed | 9 passed (10)
+       ```
+  5. **Revert Commit on Scratch Branch & Recovery (`task-858`):**
+     - Revert Commit SHA: `d9bef37` (`Revert "test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage"`)
+     - Post-Revert Test Run (`task-858`):
+       ```text
+       ✓ src/__tests__/evaluationWorkflow.test.tsx (10 tests) 3637ms
+       Test Files  1 passed (1)
+            Tests  10 passed (10)
+       ```
+  6. **Returned to Clean Submission Branch:**
+     - Checked out `feature/case-study-fullstack-irfan-aprilyana` (`26e3a25`); scratch branch was never merged into the submission branch.
+
+---
+
+### 4. Genuine AI Verification Moment
+- **Context & Stage:** Stage 5B / Stage 5C Frontend-to-Backend Error Contract Integration (`OverridePanel.tsx` & `FitGapReportPage.tsx`).
+- **Original AI Suggestion / Assumption:**
+  1. During initial Stage 5B implementation (`task-659`), the AI assumed `PortfoliosController#show_fitgap` returned `{ status: "failed", error: "..." }` (matching `PortfoliosController#show`), and assumed Rails validation errors in `PortfolioSkillsController#override` returned `{ errors: ["..."] }` (an array of plain strings).
+- **Risk / Consequence if Unchecked:**
+  1. On `FitGapReportPage`, reading `data.error` instead of `data.message` caused the UI to ignore the backend's sanitized failure message (`"The AI evaluation service timed out..."`) and fall back to a generic string.
+  2. On `OverridePanel`, `ApiController#json_error` actually wraps errors as `{"errors": [{"status": 422, "message": "Assessor notes is too short (minimum is 5 characters)"}]}`. Interpolating `errData.errors[0]` directly as a string would render `"[object Object] (Your changes have been preserved.)"` to the assessor.
+- **Independent Verification:**
+  - Inspected [`PortfoliosController#show_fitgap`](file:///e:/New%20folder/ai-interview-platform/api/app/controllers/api/v1/portfolios_controller.rb#L158-L164) and executed live HTTP `POST /api/v1/portfolio_skills/:id/override` against `http://127.0.0.1:3001` (`task-792` / `task-818`), capturing the raw JSON response body `{"errors":[{"status":422,"message":"Assessor notes is too short (minimum is 5 characters)"}]}`.
+- **Correction & Supporting Evidence:**
+  - Updated [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx#L58-L65) to read `data.message`, updated [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx#L106-L125) to extract `typeof firstErr === "string" ? firstErr : firstErr?.message`, and locked both behaviors down with Vitest assertions in [`evaluationWorkflow.test.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/__tests__/evaluationWorkflow.test.tsx) (`task-827`).
+
+---
+
+### 5. Known Limitations & Unverified Checks
+1. **Visual Viewport Inspection:** Responsive classes (`overflow-x-auto` on `ComparisonTable`, `flex-wrap` headers, `w-full sm:w-auto` on `OverridePanel`, and `break-words` on long notes/quotes) were verified via DOM structure, CSS class inspection, and production bundle compilation (`npm run build`), rather than automated Playwright screenshot diffing across physical `375px` and `1280px` browser windows.
+2. **Polling Timeout Real-Clock Duration:** Bounded polling (`MAX_POLL_ATTEMPTS = 12` at 5-second intervals = 60 seconds) is implemented in `PortfolioPage` and `FitGapReportPage`, but full 60-second real-clock timer advancement was not run in the unit suite to keep Vitest execution fast (`~3.5s`).
+3. **Legacy Unscoped Tables Outside Selected Workflow:** Tenant isolation was enforced across `ApplicationController`, `PortfoliosController`, `PortfolioSkillsController`, and `FitGapGeneratorWorker`. Other controllers outside the post-interview evaluation workflow (e.g., `AssessmentsController`) were intentionally left untouched to keep the backend diff focused on the selected scope.
