@@ -475,3 +475,36 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 3. **Post-Fix RSpec Verification (`task-577`):**
    - Command: `RAILS_ENV=test bundle exec rspec spec/requests/api/v1/evaluation_workflow_spec.rb --format documentation`
    - Result: Exited `0` (`10 examples, 0 failures` in `4.75s`).
+
+---
+
+## Stage 5B: Frontend Implementation (Declared Depth: `FRONTEND-HEAVY`)
+
+### 1. Component Architecture & Responsibilities
+1. **Type-Safe API Contracts ([`web/src/types/index.ts`](file:///e:/New%20folder/ai-interview-platform/web/src/types/index.ts), [`web/src/services/sessions.ts`](file:///e:/New%20folder/ai-interview-platform/web/src/services/sessions.ts), [`web/src/services/portfolios.ts`](file:///e:/New%20folder/ai-interview-platform/web/src/services/portfolios.ts)):**
+   - Replaced untyped `as any` casts with explicit interfaces: `SessionSummary`, `UnassessedSkill`, `PortfolioApiResponse`, `FitGapStatus`, and `FitGapStatusResponse`.
+   - Aligned `SkillComparison` with the Stage 5A backend contract (`required_level`, `expected_level`, `candidate_level`, `ai_level`, `is_override`, `assessor_notes`, `assessment_status`, `result`, `delta`, `confidence`).
+2. **Session Coverage Context ([`web/src/components/portfolio/SessionCoverageBanner.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SessionCoverageBanner.tsx)):**
+   - Renders the interview session's end reason badge (`All Skills Covered`, `Ended Early by Candidate`, `Ended by Assessor`, `Time Limit Reached`, `Interrupted by Error`), formatted duration (`mm ss`), accessible progress bar (`role="progressbar"`, `aria-valuenow`, `aria-valuemax`), and assessed vs. unassessed skill counts so assessors immediately see whether a session was cut short.
+3. **4-Tier Unassessed Skill Presentation ([`web/src/components/portfolio/UnassessedSkillsSection.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/UnassessedSkillsSection.tsx)):**
+   - Explicitly separates unassessed configured skills from scored skills and distinguishes **Not Probed (0 probes)** (`reason: "not_probed"`) from **Insufficient Evidence (1 probe)** (`reason: "insufficient_evidence"`) alongside each skill's target `expected_level` (`L1–L5`).
+4. **Accessible Override Interaction & Provenance ([`web/src/components/assessment/LevelRadio.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/assessment/LevelRadio.tsx), [`web/src/components/portfolio/OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx), [`web/src/components/portfolio/SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx)):**
+   - Fixed global DOM `id` collisions in `LevelRadio` using `React.useId()` so multiple override panels on the same page have unique radio input/label bindings (`${groupId}-l${lvl}`).
+   - Added focus management (focus moves to rationale textarea on open and returns to trigger button on close/save), `Escape` key dismissal, in-flight `saving` locks, minimum 5-character rationale validation (`role="alert"`, `aria-invalid`, `aria-describedby`), and preservation of typed notes on network/API failure.
+   - Added the **Latest Assessor Override** block on `SkillPortfolioCard` showing `AI Lx → Assessor Ly`, timestamp, and full `assessor_notes` (`break-words`), plus clear distinction between verbatim interview quotes and AI competency summaries.
+5. **Truthful Fit/Gap Comparison & Dual Narratives ([`web/src/components/fitgap/ComparisonTable.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/fitgap/ComparisonTable.tsx), [`web/src/pages/fitgap/FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx)):**
+   - `ComparisonTable` resolves `c.required_level ?? c.expected_level` for the **Required** column, displays `✏` override badge + `AI Lx → Ly` + inline `Override note` when `is_override` is true, distinguishes `Insufficient evidence` vs. `Not probed` for `not_assessed` rows, and displays all four summary counts (`Match`, `Exceeds`, `Gap`, `Not assessed`).
+   - `FitGapReportPage` renders **Overall Hiring Recommendation** (`overall_narrative`) and **Culture & Competency Fit** (`culture_narrative`) in separate cards so neither narrative masks the other.
+6. **Deterministic Async State Machines ([`web/src/pages/portfolio/PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx), [`web/src/pages/fitgap/FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx)):**
+   - Guarded async responses with `latestRequestIdRef` to prevent out-of-order response overwrites.
+   - Treated `404` on `GET /fitgap/:vacancyId` as a terminal `not_found` state and never auto-triggered `POST /fitgap` on `404`.
+   - Triggered `POST /fitgap` at most once per `(portfolioId, vacancyId)` via `hasTriggeredRef` when `status === "not_generated"`.
+   - Added bounded polling (`MAX_POLL_ATTEMPTS = 12` / 60s) with a `timeout` state offering **Check Status** (`GET` without duplicate `POST`) vs. **Restart Generation** (`POST`).
+
+### 2. Commands Executed & Verified Results
+1. **Frontend Unit & Integration Test Suite (`task-687`):**
+   - Command: `npm test` (`vitest run`)
+   - Result: Exited `0` (`1 test file passed, 9 tests passed in 7.62s`).
+2. **TypeScript & Vite Production Build (`task-694`):**
+   - Command: `npm run build` (`tsc && vite build`)
+   - Result: Exited `0` (`1843 modules transformed, built in 22.10s` with zero TypeScript errors).
