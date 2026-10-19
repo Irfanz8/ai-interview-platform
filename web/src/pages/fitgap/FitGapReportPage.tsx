@@ -237,7 +237,7 @@ export default function FitGapReportPage() {
         role="status"
         aria-busy="true"
         aria-label="Loading Fit/Gap report"
-        className="max-w-4xl mx-auto space-y-4"
+        className="w-full space-y-4"
       >
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-48 w-full" />
@@ -251,32 +251,34 @@ export default function FitGapReportPage() {
   const totalRequiredCount = comparisons.length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-10">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
+    <div className="w-full space-y-6 pb-10">
+      {/* Header card: Report heading, vacancy context & actions */}
+      <div className="rounded-[10px] border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <Link
             to={`/assessments/${id}/sessions/${sessionId}/portfolio`}
             aria-label="Back to candidate portfolio"
-            className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F7F9FA] hover:text-[#1F2937] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="space-y-0.5 min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-1 min-w-0">
+            <p className="text-xs font-medium text-[#64748B]">
               Vacancy Alignment Analysis
             </p>
-            <h1 className="text-xl font-semibold tracking-tight">Fit/Gap Report</h1>
+            <h1 className="text-[22px] sm:text-[28px] font-bold tracking-tight text-[#1F2937] leading-tight">
+              Fit/Gap Report
+            </h1>
             {(candidateName || vacancyTitle) && (
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#64748B]">
                 {candidateName && (
-                  <span className="font-medium text-foreground break-words">
+                  <span className="font-medium text-[#1F2937] break-words">
                     {candidateName}
                   </span>
                 )}
                 {candidateName && vacancyTitle && <span aria-hidden="true">→</span>}
                 {vacancyTitle && (
-                  <span className="font-medium text-primary break-words">
+                  <span className="font-semibold text-[#0B7479] break-words">
                     {vacancyTitle}
                   </span>
                 )}
@@ -296,7 +298,7 @@ export default function FitGapReportPage() {
               {regenerating ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
               ) : (
-                <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                <RefreshCw className="h-3.5 w-3.5 mr-1 text-[#64748B]" />
               )}
               Regenerate
             </Button>
@@ -311,7 +313,7 @@ export default function FitGapReportPage() {
                   {exporting === "pdf" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Download className="h-3.5 w-3.5 mr-1" />
+                    <Download className="h-3.5 w-3.5 mr-1 text-[#64748B]" />
                   )}
                   PDF
                 </Button>
@@ -324,7 +326,7 @@ export default function FitGapReportPage() {
                   {exporting === "json" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Download className="h-3.5 w-3.5 mr-1" />
+                    <Download className="h-3.5 w-3.5 mr-1 text-[#64748B]" />
                   )}
                   JSON
                 </Button>
@@ -336,12 +338,12 @@ export default function FitGapReportPage() {
 
       {/* Terminal 404 / Not Found state */}
       {notFoundError && (
-        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-white rounded-[10px] p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{notFoundError}</p>
           <Link
             to={`/assessments/${id}/sessions/${sessionId}/portfolio`}
-            className="inline-flex items-center text-xs underline text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center text-xs underline text-[#64748B] hover:text-[#1F2937]"
           >
             Return to portfolio
           </Link>
@@ -350,12 +352,12 @@ export default function FitGapReportPage() {
 
       {/* Generating */}
       {generating && !timedOut && !notFoundError && (
-        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-8 sm:p-12 text-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <div role="status" aria-live="polite" className="border border-[#E2E8F0] rounded-[10px] bg-white p-8 sm:p-10 text-center space-y-3">
+          <Loader2 className="h-7 w-7 animate-spin text-[#0F8F95] mx-auto" />
           <div className="space-y-1">
-            <p className="font-medium text-sm">Generating fit/gap report...</p>
+            <p className="font-semibold text-[#1F2937] text-sm">Generating fit/gap report...</p>
             {isStaleRefresh && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-[#64748B]">
                 Refreshing comparison and narrative after a recent assessor override.
               </p>
             )}
@@ -368,14 +370,14 @@ export default function FitGapReportPage() {
         <div
           role="status"
           aria-live="polite"
-          className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3"
+          className="border border-amber-300 bg-amber-50/70 rounded-[10px] p-6 text-center space-y-3"
         >
           <Clock className="h-6 w-6 text-amber-600 mx-auto" />
           <div className="space-y-1">
-            <p className="text-sm font-medium text-amber-900">
+            <p className="text-sm font-semibold text-amber-900">
               Fit/Gap report analysis is still processing in the background
             </p>
-            <p className="text-xs text-amber-800">
+            <p className="text-xs text-amber-800 max-w-xl mx-auto leading-relaxed">
               Automatic status polling has paused because generation is taking longer than usual. You can check the latest status without queueing a duplicate job, or restart generation.
             </p>
           </div>
@@ -402,7 +404,7 @@ export default function FitGapReportPage() {
 
       {/* Failed state */}
       {!generating && !timedOut && !notFoundError && failedError && (
-        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-white rounded-[10px] p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{failedError}</p>
           <Button
@@ -429,7 +431,7 @@ export default function FitGapReportPage() {
             <div
               role="note"
               aria-label="Partial interview coverage notice"
-              className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/50 px-4 py-3 text-xs text-amber-900"
+              className="flex items-start gap-2.5 rounded-[10px] border border-amber-200 bg-amber-50/60 px-4 py-3 text-xs text-amber-900"
             >
               <Info className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" aria-hidden="true" />
               <p className="leading-relaxed">
@@ -442,17 +444,32 @@ export default function FitGapReportPage() {
             </div>
           )}
 
-          {/* Narratives Grid: Overall Hiring Recommendation & Culture & Competency Fit */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* 1. Main Detailed Evidence Area: Skill Comparison Table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-[18px] sm:text-[20px] font-semibold text-[#1F2937]">
+                Skill Comparison
+              </CardTitle>
+              <p className="text-[13px] text-[#64748B]">
+                Direct comparison of required role proficiency levels against candidate ratings and assessor overrides.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ComparisonTable comparisons={report.skill_comparisons} />
+            </CardContent>
+          </Card>
+
+          {/* 2. Separate Readable Narrative Sections: Overall & Culture Fit */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             {report.overall_narrative && (
-              <Card className="border-primary/25 bg-primary/[0.02]">
+              <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold">
+                  <CardTitle className="text-base font-semibold text-[#1F2937]">
                     Overall Hiring Recommendation
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+                <CardContent>
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#1F2937] whitespace-pre-wrap break-words">
                     {report.overall_narrative}
                   </p>
                 </CardContent>
@@ -461,40 +478,30 @@ export default function FitGapReportPage() {
 
             <Card className={!report.overall_narrative ? "lg:col-span-2" : undefined}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
+                <CardTitle className="text-base font-semibold text-[#1F2937]">
                   Culture &amp; Competency Fit
                 </CardTitle>
               </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+              <CardContent>
+                <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#1F2937] whitespace-pre-wrap break-words">
                   {report.culture_narrative || "No separate culture narrative was generated for this report."}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Skill comparison */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Skill Comparison</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <ComparisonTable comparisons={report.skill_comparisons} />
-            </CardContent>
-          </Card>
-
-          {/* Discovered skills */}
+          {/* 3. Discovered skills (outside vacancy requirements) */}
           {portfolio && portfolio.skills.some((s) => s.is_discovered) && (
             <>
-              <Separator />
+              <Separator className="bg-[#E2E8F0]" />
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                    <Zap className="h-4 w-4 text-amber-500" />
+                <CardHeader className="pb-2.5">
+                  <CardTitle className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-500" aria-hidden="true" />
                     Discovered Skills (not in vacancy requirements)
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-2.5">
+                <CardContent className="space-y-2.5">
                   {portfolio.skills
                     .filter((s) => s.is_discovered)
                     .map((s) => {
@@ -506,20 +513,20 @@ export default function FitGapReportPage() {
                       return (
                         <div
                           key={s.id}
-                          className="text-sm flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/20 px-3 py-2"
+                          className="text-sm flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#E2E8F0] bg-[#F7F9FA] px-3.5 py-2.5"
                         >
-                          <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            <LevelBadge level={effectiveLevel} size="sm" />
-                            <span className="font-medium break-words">
+                          <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+                            <span className="font-semibold text-[#1F2937] break-words">
                               {s.skill_label}
                             </span>
+                            <LevelBadge level={effectiveLevel} size="sm" />
                             {LEVEL_DESCRIPTIONS[effectiveLevel] && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-[#64748B]">
                                 ({LEVEL_DESCRIPTIONS[effectiveLevel]})
                               </span>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-[#64748B]">
                             {override
                               ? `Human override applied (AI L${parseLevel(s.ai_level)} → L${effectiveLevel})`
                               : s.ai_confidence?.toLowerCase() === "low"

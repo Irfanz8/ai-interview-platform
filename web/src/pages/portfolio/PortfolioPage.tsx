@@ -211,7 +211,7 @@ export default function PortfolioPage() {
         role="status"
         aria-busy="true"
         aria-label="Loading candidate portfolio"
-        className="max-w-4xl mx-auto space-y-4"
+        className="w-full space-y-4"
       >
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-24 w-full" />
@@ -225,89 +225,140 @@ export default function PortfolioPage() {
   const resolvedCandidateName =
     candidateName || portfolio?.session_summary?.candidate_name || null;
   const activeOverrideCount = Object.keys(overrides).length;
+  const isComplete = !generating && !timedOut && !notFoundError && portfolio?.generation_status === "complete";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-10">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <Link
-            to={`/assessments/${id}/invite`}
-            aria-label="Back to assessment invites"
-            className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="space-y-0.5 min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Candidate Assessment Review
-            </p>
-            <h1 className="text-xl font-semibold tracking-tight">Portfolio Results</h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              {resolvedCandidateName && (
-                <span className="font-medium text-foreground break-words">
-                  {resolvedCandidateName}
-                </span>
-              )}
-              {resolvedCandidateName && assessmentName && (
-                <span aria-hidden="true">·</span>
-              )}
-              {assessmentName && (
-                <span className="break-words">{assessmentName}</span>
-              )}
+    <div className="w-full space-y-6 pb-10">
+      {/* 1. Navigation/breadcrumb + 2. Candidate/assessment title & context + 3. Primary & secondary actions */}
+      <div className="rounded-[10px] border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <Link
+              to={`/assessments/${id}/invite`}
+              aria-label="Back to assessment invites"
+              className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F7F9FA] hover:text-[#1F2937] transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="space-y-1 min-w-0">
+              <p className="text-xs font-medium text-[#64748B]">
+                Candidate Assessment Review
+              </p>
+              <h1 className="text-[22px] sm:text-[28px] font-bold tracking-tight text-[#1F2937] leading-tight">
+                {resolvedCandidateName ? `${resolvedCandidateName} — Portfolio Results` : "Portfolio Results"}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#64748B]">
+                {assessmentName && (
+                  <span className="font-medium text-[#1F2937] break-words">
+                    {assessmentName}
+                  </span>
+                )}
+                {assessmentName && portfolio?.generated_at && (
+                  <span aria-hidden="true">·</span>
+                )}
+                {portfolio?.generated_at && (
+                  <span className="text-xs text-[#64748B]">
+                    Session #{sessionId}
+                  </span>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Secondary actions: Transcript, PDF, JSON */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link
+              to={`/assessments/${id}/sessions/${sessionId}/transcript`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium border border-[#E2E8F0] bg-white text-[#1F2937] rounded-md px-3 h-8 hover:bg-[#F7F9FA] transition-colors shadow-2xs"
+            >
+              <FileText className="h-3.5 w-3.5 text-[#64748B]" />
+              Transcript
+            </Link>
+            {isComplete && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExport("pdf")}
+                  disabled={!!exporting}
+                >
+                  {exporting === "pdf" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 mr-1 text-[#64748B]" />
+                  )}
+                  PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExport("json")}
+                  disabled={!!exporting}
+                >
+                  {exporting === "json" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 mr-1 text-[#64748B]" />
+                  )}
+                  JSON
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Link
-            to={`/assessments/${id}/sessions/${sessionId}/transcript`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium border bg-background rounded-md px-3 h-8 hover:bg-accent transition-colors"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            Transcript
-          </Link>
-          {!generating && !timedOut && portfolio?.generation_status === "complete" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport("pdf")}
-                disabled={!!exporting}
-              >
-                {exporting === "pdf" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5 mr-1" />
-                )}
-                PDF
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport("json")}
-                disabled={!!exporting}
-              >
-                {exporting === "json" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5 mr-1" />
-                )}
-                JSON
-              </Button>
-            </>
-          )}
-        </div>
+        {/* 3b. Primary workflow action bar: Vacancy Fit/Gap comparison */}
+        {isComplete && (
+          <div className="pt-3.5 border-t border-dashed border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#64748B]">
+              <Briefcase className="h-4 w-4 text-[#0F8F95] shrink-0" aria-hidden="true" />
+              <span>
+                Compare effective skill ratings (including any human overrides) against a target role&apos;s requirements:
+              </span>
+            </div>
+
+            {vacancies.length === 0 ? (
+              <p className="text-xs text-[#64748B]">
+                No open vacancies configured yet.
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
+                  <SelectTrigger
+                    className="w-full sm:w-60 h-9 bg-white border-[#E2E8F0] text-xs sm:text-sm"
+                    aria-label="Select vacancy for Fit/Gap analysis"
+                  >
+                    <SelectValue placeholder="Choose target vacancy..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vacancies.map((v) => (
+                      <SelectItem key={v.id} value={String(v.id)}>
+                        {v.role_title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleRunFitGap}
+                  disabled={!selectedVacancy}
+                  className="w-full sm:w-auto h-9 text-xs sm:text-sm"
+                >
+                  Run Fit/Gap Analysis →
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Not Found state */}
       {notFoundError && (
-        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-white rounded-[10px] p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">{notFoundError}</p>
           <Link
             to="/assessments"
-            className="inline-flex items-center text-xs underline text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center text-xs underline text-[#64748B] hover:text-[#1F2937]"
           >
             Return to assessments
           </Link>
@@ -316,12 +367,12 @@ export default function PortfolioPage() {
 
       {/* Generating state */}
       {generating && !timedOut && (
-        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-8 sm:p-12 text-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <div role="status" aria-live="polite" className="border border-[#E2E8F0] rounded-[10px] bg-white p-8 sm:p-10 text-center space-y-3">
+          <Loader2 className="h-7 w-7 animate-spin text-[#0F8F95] mx-auto" />
           <div>
-            <p className="font-medium">Generating portfolio...</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              The AI is analyzing the interview transcript. This takes about 1–2 minutes.
+            <p className="font-semibold text-[#1F2937]">Generating portfolio...</p>
+            <p className="text-sm text-[#64748B] mt-1">
+              The AI is analyzing the interview transcript. This typically takes 1–2 minutes.
             </p>
           </div>
         </div>
@@ -332,14 +383,14 @@ export default function PortfolioPage() {
         <div
           role="status"
           aria-live="polite"
-          className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3"
+          className="border border-amber-300 bg-amber-50/70 rounded-[10px] p-6 text-center space-y-3"
         >
           <Clock className="h-6 w-6 text-amber-600 mx-auto" />
           <div className="space-y-1">
-            <p className="text-sm font-medium text-amber-900">
+            <p className="text-sm font-semibold text-amber-900">
               Portfolio analysis is still processing in the background
             </p>
-            <p className="text-xs text-amber-800">
+            <p className="text-xs text-amber-800 max-w-xl mx-auto leading-relaxed">
               Automatic status polling has paused because analysis is taking longer than usual. You can check the latest status without starting a duplicate job, or restart generation.
             </p>
           </div>
@@ -366,7 +417,7 @@ export default function PortfolioPage() {
 
       {/* Failed state */}
       {!generating && !timedOut && !notFoundError && (failedError || portfolio?.generation_status === "failed") && (
-        <div role="alert" className="border border-destructive/40 bg-destructive/5 rounded-lg p-6 text-center space-y-3">
+        <div role="alert" className="border border-destructive/40 bg-white rounded-[10px] p-6 text-center space-y-3">
           <AlertCircle className="h-6 w-6 text-destructive mx-auto" />
           <p className="text-sm font-medium text-destructive">
             {failedError ?? "Portfolio generation failed."}
@@ -388,36 +439,42 @@ export default function PortfolioPage() {
       )}
 
       {/* Ready state */}
-      {!generating && !timedOut && !notFoundError && portfolio?.generation_status === "complete" && (
+      {isComplete && portfolio && (
         <>
-          {/* Session Coverage Banner */}
+          {/* 4. Compact session-completeness summary */}
           {portfolio.session_summary && (
             <SessionCoverageBanner summary={portfolio.session_summary} />
           )}
 
-          {/* Configured skills */}
-          <section aria-label="Assessed configured skills" className="space-y-3">
+          {/* 5. Skill assessment content (Assessed Configured Skills) */}
+          <section aria-label="Assessed configured skills" className="space-y-3.5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div className="space-y-0.5">
-                <h2 className="text-sm font-semibold">
+                <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-tight text-[#1F2937]">
                   Assessed Configured Skills ({configuredAssessedSkills.length})
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[13px] text-[#64748B]">
                   Skills that reached 2+ interview probes with behavioral evidence. Assessors can override any AI rating with a documented rationale.
                 </p>
               </div>
               {activeOverrideCount > 0 && (
-                <span className="inline-flex items-center text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center text-xs font-medium text-[#0B7479] bg-[#0F8F95]/10 border border-[#0F8F95]/25 px-2.5 py-0.5 rounded-md">
                   {activeOverrideCount} human override{activeOverrideCount !== 1 ? "s" : ""} active
                 </span>
               )}
             </div>
             {configuredAssessedSkills.length === 0 ? (
-              <div className="border border-dashed rounded-lg p-5 text-xs text-muted-foreground text-center">
+              <div className="border border-dashed border-slate-300 bg-white rounded-[10px] p-6 text-xs text-[#64748B] text-center">
                 No configured skills reached the minimum evidence threshold (2+ probes) during this session.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div
+                className={
+                  configuredAssessedSkills.length > 1
+                    ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
+                    : "space-y-4"
+                }
+              >
                 {configuredAssessedSkills.map((skill) => (
                   <SkillPortfolioCard
                     key={skill.id}
@@ -430,29 +487,27 @@ export default function PortfolioPage() {
             )}
           </section>
 
-          {/* Unassessed configured skills */}
-          {portfolio.unassessed_skills && portfolio.unassessed_skills.length > 0 && (
-            <>
-              <Separator />
-              <UnassessedSkillsSection skills={portfolio.unassessed_skills} />
-            </>
-          )}
-
-          {/* Discovered skills */}
+          {/* 5b. Discovered skills (if any) */}
           {discoveredSkills.length > 0 && (
             <>
-              <Separator />
-              <section aria-label="Discovered skills" className="space-y-3">
-                <div>
-                  <h2 className="text-sm font-semibold flex items-center gap-1.5">
-                    <Zap className="h-4 w-4 text-amber-500" />
+              <Separator className="bg-[#E2E8F0]" />
+              <section aria-label="Discovered skills" className="space-y-3.5">
+                <div className="space-y-0.5">
+                  <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-tight text-[#1F2937] flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-500" aria-hidden="true" />
                     Discovered Skills ({discoveredSkills.length})
                   </h2>
-                  <p className="text-xs text-muted-foreground">
-                    Skills the AI probed that were not in the original assessment
+                  <p className="text-[13px] text-[#64748B]">
+                    Additional competencies explored during the interview outside the target rubric.
                   </p>
                 </div>
-                <div className="space-y-3">
+                <div
+                  className={
+                    discoveredSkills.length > 1
+                      ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
+                      : "space-y-4"
+                  }
+                >
                   {discoveredSkills.map((skill) => (
                     <SkillPortfolioCard
                       key={skill.id}
@@ -466,46 +521,13 @@ export default function PortfolioPage() {
             </>
           )}
 
-          <Separator />
-
-          {/* Fit/Gap Next Action Card */}
-          <Card className="bg-muted/25">
-            <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold flex items-center gap-1.5">
-                  <Briefcase className="h-4 w-4 text-primary" aria-hidden="true" />
-                  Vacancy Fit/Gap Analysis
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Compare effective skill ratings (including any assessor overrides) against a target role&apos;s required levels.
-                </p>
-              </div>
-
-              {vacancies.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  No open vacancies available yet. Create a vacancy to run a Fit/Gap comparison.
-                </p>
-              ) : (
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
-                    <SelectTrigger className="w-full sm:w-64 bg-background" aria-label="Select vacancy for Fit/Gap analysis">
-                      <SelectValue placeholder="Choose vacancy..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vacancies.map((v) => (
-                        <SelectItem key={v.id} value={String(v.id)}>
-                          {v.role_title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={handleRunFitGap} disabled={!selectedVacancy} className="w-full sm:w-auto">
-                    Run Fit/Gap Analysis →
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* 6. Clearly separated unassessed information */}
+          {portfolio.unassessed_skills && portfolio.unassessed_skills.length > 0 && (
+            <>
+              <Separator className="bg-[#E2E8F0]" />
+              <UnassessedSkillsSection skills={portfolio.unassessed_skills} />
+            </>
+          )}
         </>
       )}
     </div>

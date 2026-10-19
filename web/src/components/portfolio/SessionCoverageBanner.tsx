@@ -41,8 +41,8 @@ export default function SessionCoverageBanner({ summary }: SessionCoverageBanner
     <section
       aria-label="Interview session coverage summary"
       className={cn(
-        "rounded-lg border p-4 space-y-3",
-        isPartial ? "bg-amber-50/40 border-amber-200" : "bg-muted/30"
+        "rounded-[10px] border bg-white p-4 sm:px-5 sm:py-4 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
+        isPartial ? "border-amber-200/90" : "border-[#E2E8F0]"
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -50,18 +50,18 @@ export default function SessionCoverageBanner({ summary }: SessionCoverageBanner
           {isPartial ? (
             <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" aria-hidden="true" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="h-4 w-4 text-[#0F8F95] shrink-0" aria-hidden="true" />
           )}
-          <span className="text-sm font-semibold">
+          <span className="text-sm font-semibold text-[#1F2937]">
             {assessed} of {configured} configured skill{configured !== 1 ? "s" : ""} assessed
           </span>
           {reasonInfo && (
             <span
               className={cn(
-                "text-xs font-medium px-2 py-0.5 rounded border",
-                reasonInfo.tone === "success" && "bg-green-50 text-green-700 border-green-200",
-                reasonInfo.tone === "warning" && "bg-amber-100/80 text-amber-800 border-amber-300",
-                reasonInfo.tone === "neutral" && "bg-background text-muted-foreground border-border"
+                "text-xs font-medium px-2 py-0.5 rounded-md border",
+                reasonInfo.tone === "success" && "bg-emerald-50 text-emerald-800 border-emerald-200",
+                reasonInfo.tone === "warning" && "bg-amber-50 text-amber-900 border-amber-200",
+                reasonInfo.tone === "neutral" && "bg-[#F7F9FA] text-[#64748B] border-[#E2E8F0]"
               )}
             >
               {reasonInfo.label}
@@ -69,7 +69,7 @@ export default function SessionCoverageBanner({ summary }: SessionCoverageBanner
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
           <Clock className="h-3.5 w-3.5" aria-hidden="true" />
           <span>{formatDurationSeconds(summary.duration_seconds)}</span>
         </div>
@@ -83,17 +83,17 @@ export default function SessionCoverageBanner({ summary }: SessionCoverageBanner
             aria-valuenow={assessed}
             aria-valuemin={0}
             aria-valuemax={configured}
-            className="h-2 w-full rounded-full bg-neutral-200 overflow-hidden"
+            className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden"
           >
             <div
               className={cn(
                 "h-full transition-all",
-                isPartial ? "bg-amber-500" : "bg-teal-600"
+                isPartial ? "bg-amber-500" : "bg-[#0F8F95]"
               )}
               style={{ width: `${pct}%` }}
             />
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B]">
             <span>
               {covered} fully covered · {Math.max(0, assessed - covered)} partially assessed
             </span>

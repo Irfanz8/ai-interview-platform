@@ -38,8 +38,8 @@ export default function LevelRadio({
             className={cn(
               "flex items-center gap-2 rounded-md border px-2.5 py-2 transition-colors",
               isSelected
-                ? "border-primary bg-primary/5 text-foreground shadow-2xs"
-                : "border-border bg-background hover:bg-muted/50 text-muted-foreground",
+                ? "border-[#0F8F95] bg-[#0F8F95]/[0.06] text-[#1F2937] shadow-2xs"
+                : "border-[#E2E8F0] bg-white hover:border-slate-300 text-[#64748B]",
               disabled && "opacity-60 cursor-not-allowed"
             )}
           >
@@ -51,10 +51,10 @@ export default function LevelRadio({
                 disabled && "cursor-not-allowed"
               )}
             >
-              <span className="text-xs font-semibold text-foreground">
+              <span className="text-xs font-semibold text-[#1F2937]">
                 {LEVEL_LABELS[level]}
               </span>
-              <span className="text-[10px] text-muted-foreground truncate">
+              <span className="text-[11px] text-[#64748B] truncate">
                 {LEVEL_DESCRIPTIONS[level]}
               </span>
             </Label>

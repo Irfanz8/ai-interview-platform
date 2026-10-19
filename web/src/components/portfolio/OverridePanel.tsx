@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import LevelRadio from "@/components/assessment/LevelRadio";
 import LevelBadge from "./LevelBadge";
 import { portfoliosApi } from "@/services/portfolios";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, CheckCircle2, ArrowRight } from "lucide-react";
 import { parseLevel } from "@/utils/constants";
 import { toast } from "@/components/ui/toast";
 import type { PortfolioSkill, AssessorOverride } from "@/types";
@@ -139,18 +139,17 @@ export default function OverridePanel({
         {hasOverride ? (
           <>
             <div
-              className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm"
+              className="flex flex-wrap items-center gap-1.5 text-xs"
               aria-label={`AI rating L${aiNumericLevel} overridden to L${existingOverride.override_level}`}
             >
-              <span className="text-xs text-muted-foreground">Rating source:</span>
+              <span className="text-[#64748B]">Rating change:</span>
               <LevelBadge level={aiNumericLevel} size="sm" />
-              <span className="text-muted-foreground text-xs">AI</span>
-              <span className="text-muted-foreground" aria-hidden="true">
-                →
-              </span>
+              <span className="text-[#64748B]">AI</span>
+              <ArrowRight className="h-3 w-3 text-[#64748B]" aria-hidden="true" />
               <LevelBadge level={existingOverride.override_level} size="sm" />
-              <span className="text-xs text-emerald-700 font-medium">
-                Overridden ✓
+              <span className="inline-flex items-center gap-1 text-[#0B7479] font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#0F8F95]" aria-hidden="true" />
+                Overridden
               </span>
             </div>
             <Button
@@ -167,8 +166,8 @@ export default function OverridePanel({
           </>
         ) : (
           <>
-            <span className="text-xs text-muted-foreground">
-              Disagree with the AI rating? Document evidence to adjust this level.
+            <span className="text-xs text-[#64748B]">
+              Adjust competency level with documented rationale
             </span>
             <Button
               ref={triggerButtonRef}
@@ -197,25 +196,25 @@ export default function OverridePanel({
       aria-label={`Assessor override for ${skill.skill_label}`}
       onKeyDown={handleKeyDown}
       aria-busy={saving}
-      className="border border-border/80 rounded-lg p-4 space-y-4 bg-muted/25 w-full"
+      className="border border-[#E2E8F0] rounded-lg p-4 space-y-4 bg-[#F7F9FA] w-full"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#E2E8F0] pb-3">
         <div className="space-y-0.5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
-            Assessor Override — {skill.skill_label}
-          </span>
-          <p className="text-xs text-muted-foreground">
+          <h4 className="text-sm font-semibold text-[#1F2937]">
+            Override Competency Rating
+          </h4>
+          <p className="text-xs text-[#64748B]">
             Select the adjusted L1–L5 proficiency level and document the supporting interview evidence.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-background border rounded-md px-2.5 py-1 text-muted-foreground">
-          Original AI rating: <strong className="text-foreground">L{aiNumericLevel}</strong>
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-[#E2E8F0] rounded-md px-2.5 py-1 text-[#64748B]">
+          AI rating: <strong className="text-[#1F2937]">L{aiNumericLevel}</strong>
         </span>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          1. Adjusted Proficiency Level
+        <Label className="text-xs font-semibold text-[#1F2937]">
+          Adjusted Proficiency Level
         </Label>
         <LevelRadio
           value={overrideLevel}
@@ -227,16 +226,16 @@ export default function OverridePanel({
 
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Label htmlFor={notesInputId} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            2. Override rationale <span className="text-destructive">*</span>
+          <Label htmlFor={notesInputId} className="text-xs font-semibold text-[#1F2937]">
+            Override rationale <span className="text-destructive">*</span>
           </Label>
           <span
             className={`text-xs ${
               validationError
                 ? "text-destructive font-medium"
                 : trimmedLen >= MIN_NOTES_LENGTH
-                ? "text-emerald-700 font-medium"
-                : "text-muted-foreground"
+                ? "text-[#0B7479] font-medium"
+                : "text-[#64748B]"
             }`}
           >
             {trimmedLen}/{MIN_NOTES_LENGTH}+ min characters
@@ -257,7 +256,11 @@ export default function OverridePanel({
             }
           }}
           rows={3}
-          className={activeError ? "border-destructive focus-visible:ring-destructive/30 bg-background" : "bg-background"}
+          className={
+            activeError
+              ? "border-destructive focus-visible:ring-destructive/30 bg-white text-sm"
+              : "bg-white border-[#E2E8F0] text-sm"
+          }
           placeholder="Explain the behavioral evidence supporting this rating (min. 5 characters)..."
         />
         {activeError && (
@@ -272,7 +275,7 @@ export default function OverridePanel({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-[#64748B]">
           {saving ? "Saving override and refreshing alignment reports..." : "Press Esc to cancel"}
         </span>
         <div className="flex items-center gap-2 ml-auto">
