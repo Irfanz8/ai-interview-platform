@@ -14,30 +14,34 @@ interface ComparisonTableProps {
 
 function ResultBadge({ comparison }: { comparison: SkillComparison }) {
   const label = FIT_GAP_RESULT_LABELS[comparison.result] ?? comparison.result;
-  const classes = FIT_GAP_RESULT_CLASSES[comparison.result] ?? "";
 
   let icon = "";
   let suffix = "";
-  if (comparison.result === "match") icon = "✅";
-  else if (comparison.result === "exceed") {
+  let semanticClasses = "";
+
+  if (comparison.result === "match") {
+    icon = "✅";
+    semanticClasses = "border-emerald-200 bg-emerald-50 text-emerald-800";
+  } else if (comparison.result === "exceed") {
     icon = "⭐";
     suffix = comparison.delta ? ` +${comparison.delta}` : "";
+    semanticClasses = "border-teal-200 bg-teal-50 text-teal-800";
   } else if (comparison.result === "gap") {
     icon = "⚠";
     suffix = comparison.delta ? ` -${Math.abs(comparison.delta)}` : "";
+    semanticClasses = "border-amber-300 bg-amber-50 text-amber-900";
   } else {
     icon = "—";
+    semanticClasses =
+      "border-dashed border-neutral-300 bg-neutral-100/70 text-neutral-600 font-medium";
   }
 
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap",
-        comparison.result === "match" && "border-green-200",
-        comparison.result === "exceed" && "border-green-200",
-        comparison.result === "gap" && "border-amber-200",
-        comparison.result === "not_assessed" && "border-dashed border-neutral-300",
-        classes
+        FIT_GAP_RESULT_CLASSES[comparison.result],
+        semanticClasses
       )}
     >
       <span aria-hidden="true">{icon}</span> {label}
@@ -69,7 +73,7 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
         aria-label="Fit/gap comparison summary"
         className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
       >
-        <div className="rounded-lg border border-green-200/80 bg-green-50/50 px-3 py-2 text-xs text-green-900">
+        <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/50 px-3 py-2 text-xs text-emerald-900">
           <span className="font-semibold">
             ✅ Match: {matchCount} skill{matchCount !== 1 ? "s" : ""}
           </span>
@@ -92,20 +96,20 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
       </div>
 
       {/* Responsive Table Container */}
-      <div className="overflow-x-auto rounded-lg border bg-card shadow-xs">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border bg-card shadow-2xs">
+        <table className="w-full min-w-[540px] text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
               <th scope="col" className="text-left px-4 py-3 font-semibold">
                 Skill &amp; Provenance
               </th>
-              <th scope="col" className="text-center px-4 py-3 font-semibold">
+              <th scope="col" className="text-center px-3 sm:px-4 py-3 font-semibold w-28 sm:w-32">
                 Required
               </th>
-              <th scope="col" className="text-center px-4 py-3 font-semibold">
+              <th scope="col" className="text-center px-3 sm:px-4 py-3 font-semibold w-32 sm:w-40">
                 Candidate
               </th>
-              <th scope="col" className="text-center px-4 py-3 font-semibold">
+              <th scope="col" className="text-center px-3 sm:px-4 py-3 font-semibold w-32 sm:w-36">
                 Outcome
               </th>
             </tr>
@@ -113,13 +117,21 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
           <tbody className="divide-y">
             {comparisons.map((c, i) => {
               const reqLevel = c.required_level ?? c.expected_level;
+              const isNotAssessed = c.result === "not_assessed" || c.candidate_level == null;
               const isInsufficient =
                 c.assessment_status === "insufficient_evidence";
+              const isLowConfidence =
+                !c.is_override && c.confidence?.toLowerCase() === "low";
+              const isPartial =
+                !c.is_override && c.assessment_status === "partial";
 
               return (
                 <tr
                   key={c.skill_id ?? `${c.skill_label}-${i}`}
-                  className="align-top transition-colors hover:bg-muted/20"
+                  className={cn(
+                    "align-middle transition-colors hover:bg-muted/20",
+                    isNotAssessed && "bg-neutral-50/40"
+                  )}
                 >
                   <td className="px-4 py-3.5 min-w-[180px]">
                     <div className="font-medium text-foreground break-words">
@@ -133,14 +145,28 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
                         {c.assessor_notes}
                       </div>
                     )}
+                    {!c.is_override && (isLowConfidence || isPartial) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {isLowConfidence && (
+                          <span className="inline-flex items-center text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded">
+                            Low AI confidence
+                          </span>
+                        )}
+                        {isPartial && (
+                          <span className="inline-flex items-center text-[11px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                            Partial coverage
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </td>
 
-                  <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                  <td className="px-3 sm:px-4 py-3.5 text-center whitespace-nowrap">
                     {reqLevel != null ? (
                       <div className="inline-flex flex-col items-center">
                         <span
                           className={cn(
-                            "inline-flex items-center justify-center rounded px-2 py-0.5 text-xs font-semibold border border-black/5",
+                            "inline-flex items-center justify-center rounded px-2.5 py-0.5 text-xs font-semibold border border-black/5",
                             LEVEL_BADGE_CLASSES[reqLevel] ?? "bg-muted text-foreground"
                           )}
                         >
@@ -157,13 +183,13 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
                     )}
                   </td>
 
-                  <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                  <td className="px-3 sm:px-4 py-3.5 text-center whitespace-nowrap">
                     {c.candidate_level != null ? (
                       <div className="inline-flex flex-col items-center gap-0.5">
                         <div className="inline-flex items-center gap-1">
                           <span
                             className={cn(
-                              "inline-flex items-center justify-center rounded px-2 py-0.5 text-xs font-semibold border border-black/5",
+                              "inline-flex items-center justify-center rounded px-2.5 py-0.5 text-xs font-semibold border border-black/5",
                               LEVEL_BADGE_CLASSES[c.candidate_level] ?? "bg-muted text-foreground"
                             )}
                           >
@@ -179,26 +205,32 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
                             </span>
                           )}
                         </div>
-                        {c.is_override && c.ai_level != null && (
+                        {c.is_override && c.ai_level != null ? (
                           <span className="text-[11px] font-medium text-emerald-800">
                             AI {LEVEL_LABELS[c.ai_level] ?? `L${c.ai_level}`} →{" "}
                             {LEVEL_LABELS[c.candidate_level] ?? `L${c.candidate_level}`}
                           </span>
+                        ) : (
+                          LEVEL_DESCRIPTIONS[c.candidate_level] && (
+                            <span className="hidden sm:inline text-[10px] text-muted-foreground mt-0.5">
+                              {LEVEL_DESCRIPTIONS[c.candidate_level]}
+                            </span>
+                          )
                         )}
                       </div>
                     ) : (
                       <div className="inline-flex flex-col items-center">
-                        <span className="text-xs font-medium text-muted-foreground">
+                        <span className="inline-flex items-center rounded border border-dashed border-neutral-300 bg-neutral-100/80 px-2 py-0.5 text-xs font-medium text-neutral-700">
                           Not assessed
                         </span>
-                        <span className="text-[11px] text-muted-foreground/80">
+                        <span className="text-[11px] text-muted-foreground mt-0.5">
                           {isInsufficient ? "Insufficient evidence" : "Not probed"}
                         </span>
                       </div>
                     )}
                   </td>
 
-                  <td className="px-4 py-3.5 text-center">
+                  <td className="px-3 sm:px-4 py-3.5 text-center">
                     <ResultBadge comparison={c} />
                   </td>
                 </tr>
@@ -218,4 +250,5 @@ export default function ComparisonTable({ comparisons }: ComparisonTableProps) {
     </div>
   );
 }
+
 

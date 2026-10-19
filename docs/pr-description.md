@@ -137,23 +137,23 @@ The backend was modified strictly to support the frontend workflow truthfully an
 ## 7. Actual Test and Build Results
 
 ### Backend Suite (RSpec)
-Command: `bundle exec rspec spec/requests/api/v1/evaluation_workflow_spec.rb`
+Command: `bundle exec rspec spec/requests/api/v1/evaluation_workflow_spec.rb --format documentation`
 ```text
-Finished in 4.06 seconds (files took 12.49 seconds to load)
+Finished in 6.44 seconds (files took 15.26 seconds to load)
 10 examples, 0 failures
 ```
 
 ### Frontend Behavioral Suite (Vitest)
 Command: `npm test` (`vitest run`)
 ```text
-✓ src/__tests__/evaluationWorkflow.test.tsx (10 tests) 2834ms
-  ✓ Evaluation Workflow — Stage 5B Frontend Verification > PortfolioPage — Session Coverage, 4-Tier Semantics & Async States (5 tests)
-  ✓ Evaluation Workflow — Stage 5B Frontend Verification > SkillPortfolioCard, OverridePanel & LevelRadio — Accessibility & Validation (2 tests)
-  ✓ Evaluation Workflow — Stage 5B Frontend Verification > FitGapReportPage & ComparisonTable — Status Contract, Narratives & Table Columns (3 tests)
+ ✓ src/__tests__/authAndValidation.test.tsx (4 tests)
+ ✓ src/__tests__/evaluationWorkflow.test.tsx (11 tests)
+   ✓ Evaluation Workflow — Stage 5B Frontend Verification > PortfolioPage — Session Coverage, 4-Tier Semantics & Async States (5 tests)
+   ✓ Evaluation Workflow — Stage 5B Frontend Verification > SkillPortfolioCard, OverridePanel & LevelRadio — Accessibility & Validation (2 tests)
+   ✓ Evaluation Workflow — Stage 5B Frontend Verification > FitGapReportPage & ComparisonTable — Status Contract, Narratives & Table Columns (4 tests)
 
-Test Files  1 passed (1)
-     Tests  10 passed (10)
-  Duration  9.02s
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
 ```
 
 ### Frontend Production Build (TypeScript & Vite)
@@ -161,16 +161,16 @@ Command: `npm run build` (`tsc && vite build`)
 ```text
 vite v6.4.4 building for production...
 transforming...
-✓ 1843 modules transformed.
+✓ 1941 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                         0.64 kB │ gzip:  0.34 kB
-dist/assets/index-C6UKMlhV.css         35.87 kB │ gzip:  7.21 kB
+dist/assets/index-CoTRE1FX.css         44.32 kB │ gzip:  8.35 kB
 dist/assets/vendor-ui-DYhNZzle.js     104.61 kB │ gzip: 35.42 kB
-dist/assets/vendor-misc-bHIarPFx.js   115.89 kB │ gzip: 40.64 kB
+dist/assets/vendor-misc-CXS76-aN.js   118.20 kB │ gzip: 41.33 kB
 dist/assets/vendor-react-D3w9ihCe.js  181.45 kB │ gzip: 59.79 kB
-dist/assets/index-BCnVwpR_.js         205.75 kB │ gzip: 57.25 kB
-✓ built in 12.59s
+dist/assets/index-rDLeXh7J.js         313.24 kB │ gzip: 87.89 kB
+✓ built in 11.04s
 ```
 
 ---
@@ -195,7 +195,7 @@ dist/assets/index-BCnVwpR_.js         205.75 kB │ gzip: 57.25 kB
           Tests  1 failed | 9 passed (10)
      ```
   5. **Revert Commit & Recovery (`task-953`):** Commit `f8f5ab5` (`Revert "test(fault): seed intentional 404 auto-trigger fault in FitGapReportPage"`). Test output recovered: `10 passed (10)` in `2834ms`.
-  6. **Clean Return:** Returned to `feature/case-study-fullstack-irfan-aprilyana` (commit `3829718`). The scratch branch was kept isolated and never merged.
+  6. **Clean Return:** Returned to `feature/case-study-fullstack-irfan-aprilyana`. The scratch branch was kept isolated and never merged.
 
 ---
 
@@ -213,13 +213,13 @@ dist/assets/index-BCnVwpR_.js         205.75 kB │ gzip: 57.25 kB
 
 ---
 
-## 10. Screenshots and Visual Artifacts
+## 10. Screenshots and Visual Verification
 
-- **Baseline UI State:** Documented in initial case study exploration (`media_1792345944493_d302e1d0.png` showing cramped portfolio cards with missing unassessed skill classifications).
-- **Refined UI State:**
-  - Expanded 4xl desktop view with uppercase tracking headers, clear candidate metadata, and dedicated Vacancy Fit/Gap CTA card.
-  - Emerald override callouts with timestamp, assessor identity, and verbatim rationale on [`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx).
-  - 4-category visual summary strip (`Match`, `Exceeds`, `Gap`, `Not assessed`) and dashed `Not probed` indicators on [`ComparisonTable.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/fitgap/ComparisonTable.tsx).
+- **Baseline UI State:** Captured during initial case study exploration (`media_1792345944493_d302e1d0.png` showing cramped portfolio cards with missing unassessed skill classifications).
+- **Refined UI State & Manual Viewport Checklist (Pending Live Browser Screenshot Capture):**
+  - Unified `max-w-5xl` layout across [`AssessorLayout.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/layout/AssessorLayout.tsx), [`PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx), and [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx) with `16px` mobile gutters (`px-4`) and `24–32px` desktop padding (`sm:px-6 lg:px-8`).
+  - Full-width [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx) mounted in the footer of [`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx) with responsive `grid-cols-2 sm:grid-cols-5` [`LevelRadio.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/assessment/LevelRadio.tsx) cards and live character counter.
+  - 4-category visual summary strip (`Match`, `Exceeds`, `Gap`, `Not assessed`), `Low AI confidence` / `Partial coverage` indicators, and dashed `Not assessed` rows in [`ComparisonTable.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/fitgap/ComparisonTable.tsx), plus side-by-side `lg:grid-cols-2` overall and culture narrative cards on [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx).
 
 ---
 

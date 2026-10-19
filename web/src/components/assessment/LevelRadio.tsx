@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { LEVEL_LABELS } from "@/utils/constants";
+import { LEVEL_LABELS, LEVEL_DESCRIPTIONS } from "@/utils/constants";
 import { cn } from "@/lib/utils";
 
 interface LevelRadioProps {
@@ -27,15 +27,36 @@ export default function LevelRadio({
       value={String(value)}
       onValueChange={(v) => onChange(Number(v))}
       disabled={disabled}
-      className={cn("flex flex-wrap items-center gap-3", className)}
+      className={cn("grid grid-cols-2 sm:grid-cols-5 gap-2", className)}
     >
       {[1, 2, 3, 4, 5].map((level) => {
         const itemId = `${instanceId}-level-${level}`;
+        const isSelected = value === level;
         return (
-          <div key={level} className="flex items-center gap-1.5">
-            <RadioGroupItem value={String(level)} id={itemId} />
-            <Label htmlFor={itemId} className="cursor-pointer font-normal">
-              {LEVEL_LABELS[level]}
+          <div
+            key={level}
+            className={cn(
+              "flex items-center gap-2 rounded-md border px-2.5 py-2 transition-colors",
+              isSelected
+                ? "border-primary bg-primary/5 text-foreground shadow-2xs"
+                : "border-border bg-background hover:bg-muted/50 text-muted-foreground",
+              disabled && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <RadioGroupItem value={String(level)} id={itemId} className="shrink-0" />
+            <Label
+              htmlFor={itemId}
+              className={cn(
+                "cursor-pointer flex flex-col leading-tight min-w-0 flex-1",
+                disabled && "cursor-not-allowed"
+              )}
+            >
+              <span className="text-xs font-semibold text-foreground">
+                {LEVEL_LABELS[level]}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {LEVEL_DESCRIPTIONS[level]}
+              </span>
             </Label>
           </div>
         );
@@ -43,3 +64,4 @@ export default function LevelRadio({
     </RadioGroup>
   );
 }
+

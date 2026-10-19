@@ -596,31 +596,45 @@ We reconcile `session.assessment.assessment_skills.order(:order)` against `sessi
 
 ---
 
-### 5. Visual UI/UX Refinement (`FRONTEND-HEAVY` Polish)
-- **Visual & Information Architecture Upgrades Implemented:**
-  1. **Page Layout & Hierarchy (`PortfolioPage.tsx` & `FitGapReportPage.tsx`):**
-     - Expanded page containers from cramped `max-w-2xl` (`672px`) to `max-w-4xl mx-auto space-y-6 pb-10` (`896px`), eliminating horizontal crowding on 6-column tables and multi-card grids.
-     - Introduced structured page headers with uppercase tracking eyebrows (`Candidate Assessment Review` / `Vacancy Alignment Report`), prominent `candidateName` (`text-2xl font-bold tracking-tight text-slate-900`), and secondary `assessmentName` / `vacancyTitle` context.
-     - Elevated the **Vacancy Fit/Gap Analysis** CTA on [`PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx) into a dedicated `Card` with helper guidance explaining that effective skill ratings (including assessor overrides) are compared directly against target role requirements.
-  2. **Strict Card Reading Order & Provenance (`SkillPortfolioCard.tsx`, `LevelBadge.tsx`, `ConfidenceIndicator.tsx`):**
-     - Enforced strict reading order inside [`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx):
-       1. Skill name + assessment status pill (`Assessed` vs `Partial (N/M responses)`)
-       2. Effective competency rating ([`LevelBadge.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/LevelBadge.tsx) with crisp border and level description sub-label)
-       3. Provenance / Confidence ([`ConfidenceIndicator.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/ConfidenceIndicator.tsx) semantic pill badge + emerald `Latest Assessor Override: AI Lx → Assessor Ly` callout with timestamp and rationale)
+### 5. Visual UI/UX & Accessibility Refinement (`FRONTEND-HEAVY` Polish)
+- **Visual, Layout & Information Architecture Upgrades Implemented:**
+  1. **Unified Page Layout & Responsive Gutters ([`AssessorLayout.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/layout/AssessorLayout.tsx), [`PortfolioPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/portfolio/PortfolioPage.tsx), [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx)):**
+     - Aligned top navigation bar and main content containers (`max-w-5xl mx-auto`) with `16px` mobile gutters (`px-4`) and `24–32px` desktop padding (`sm:px-6 lg:px-8`), plus `flex-wrap` header action bars so `375px` mobile viewports never overflow horizontally.
+     - Structured page headers with uppercase tracking eyebrows (`Candidate Assessment Review` / `Vacancy Alignment Report`), prominent candidate title (`text-xl sm:text-2xl font-bold`), and elevated the **Vacancy Fit/Gap Analysis** CTA into a dedicated card with natural wrapping for select + button controls.
+  2. **Strict 6-Step Skill Card Hierarchy & Full-Width Override Footer ([`SkillPortfolioCard.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/SkillPortfolioCard.tsx), [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx), [`LevelRadio.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/assessment/LevelRadio.tsx)):**
+     - Moved `OverridePanel` out of the top-right header flex row into a dedicated full-width card footer (`pt-3 border-t border-border/60`), preventing the open override form from squeezing the skill name and badges on `768px`–`1024px` screens and matching the 6-step reading order:
+       1. Skill name + assessment coverage badge (`Assessed` vs `Partial (N/M responses)`)
+       2. Effective competency rating ([`LevelBadge.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/LevelBadge.tsx) with level description subtitle)
+       3. Provenance / Confidence ([`ConfidenceIndicator.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/ConfidenceIndicator.tsx) + emerald `Latest Assessor Override: AI Lx → Assessor Ly` callout with timestamp and rationale)
        4. AI Competency Summary (`leading-relaxed break-words`)
-       5. Supporting Verbatim Evidence (styled as left-bordered `blockquote` cards with `Q:` prompt context and verbatim candidate transcript excerpt)
-       6. Override Action footer (`Update Override` / `Override Rating`)
-  3. **Scannable 6-Column Comparison Table (`ComparisonTable.tsx`):**
-     - Added a 4-category visual summary strip (`Match`, `Exceeds`, `Gap`, `Not assessed`) above the table with semantic color coding (`emerald`, `blue`, `red`, `slate` dashed).
-     - Rendered [`LevelBadge`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/LevelBadge.tsx) with `showDescription` in both `Required` and `Candidate` columns, explicit `AI Lx → Ly` provenance pills, and an emerald rationale callout in the `Notes / Rationale` column.
-  4. **Verification (`task-907`):**
-     - `npm test`: `10 passed (10)` in `src/__tests__/evaluationWorkflow.test.tsx`.
-     - `npm run build`: `tsc && vite build` succeeded cleanly (`dist/assets/index-C6UKMlhV.css 35.87 kB`, `dist/assets/index-BCnVwpR_.js 205.75 kB`).
+       5. Supporting Verbatim Evidence (left-bordered `blockquote` cards distinguishing `Q:` prompt from verbatim transcript excerpt)
+       6. Full-width Override Action footer (`Update Override` / `Override Rating`)
+     - Redesigned [`LevelRadio.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/assessment/LevelRadio.tsx) as a responsive `grid-cols-2 sm:grid-cols-5` interactive card selector showing both `L1–L5` and `Foundational–Expert` descriptions while preserving `useId()` radio/label accessibility.
+     - Added numbered field labels, live character count indicator (`X/5+ min characters`) beside the rationale label, inline validation (`role="alert"`), and `aria-busy` submitting state in [`OverridePanel.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/portfolio/OverridePanel.tsx).
+  3. **Scannable Comparison Table & Honest Data Uncertainty ([`ComparisonTable.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/components/fitgap/ComparisonTable.tsx), [`FitGapReportPage.tsx`](file:///e:/New%20folder/ai-interview-platform/web/src/pages/fitgap/FitGapReportPage.tsx)):**
+     - Distinguished `Match` (`emerald`), `Exceeds` (`teal`), `Gap` (`amber`), and `Not assessed` (`neutral dashed`) in both the 4-category summary strip and table rows.
+     - Surfaced `Low AI confidence` and `Partial coverage` indicators directly in the `Candidate` column on unoverridden skills, plus a **Partial coverage note** (`role="note"`, `aria-label="Partial interview coverage notice"`) on `FitGapReportPage` whenever `notAssessedCount > 0` so the report never implies greater certainty than the underlying data supports.
+     - Placed **Overall Hiring Recommendation** and **Culture & Competency Fit** cards in a side-by-side responsive grid (`grid-cols-1 lg:grid-cols-2`) when both narratives exist.
+     - Fixed the **Discovered Skills** section on `FitGapReportPage` to resolve `portfolio.overrides`, render `LevelBadge` (`L1–L5`) + `LEVEL_DESCRIPTIONS` (instead of a raw integer `{s.ai_level}`), and display `Assessor override (AI Lx → Ly)`.
+  4. **Non-Destructive Polling Timeout vs. Confirmed Backend Failure:**
+     - Updated the bounded polling pause banner (`timedOut`) in both `PortfolioPage.tsx` and `FitGapReportPage.tsx` from `role="alert"` to `role="status" aria-live="polite"` with non-alarmist guidance (`"Portfolio analysis / Report generation is still processing in the background"`), keeping `role="alert"` strictly for confirmed backend failures or 404/validation errors.
+     - Removed the `!failedError` render gate from `PortfolioPage`'s `complete` portfolio view so a transient retry error never blanks out an already-loaded portfolio.
+  5. **Updated Verification Results (`task-335`, `task-344`, `task-352`):**
+     - **Backend RSpec Suite:** `bundle exec rspec spec/requests/api/v1/evaluation_workflow_spec.rb --format documentation` -> **`10 examples, 0 failures`** (`6.44s`).
+     - **Frontend Vitest Suite:** `npm test` (`vitest run`) -> **`2 test files passed, 15 tests passed`** (`11` in `src/__tests__/evaluationWorkflow.test.tsx` + `4` in `src/__tests__/authAndValidation.test.tsx`).
+     - **TypeScript & Vite Production Build:** `npm run build` (`tsc && vite build`) -> **Exited `0`** (`1941 modules transformed`, zero TypeScript or bundler errors).
 
 ---
 
-### 6. Known Limitations & Unverified Checks
-1. **Visual Viewport Inspection:** Responsive classes (`overflow-x-auto` on `ComparisonTable`, `flex-wrap` headers, `w-full sm:w-auto` on `OverridePanel`, and `break-words` on long notes/quotes) were verified via DOM structure, CSS class inspection, and production bundle compilation (`npm run build`), rather than automated Playwright screenshot diffing across physical `375px` and `1280px` browser windows.
-2. **Polling Timeout Real-Clock Duration:** Bounded polling (`MAX_POLL_ATTEMPTS = 12` at 5-second intervals = 60 seconds) is implemented in `PortfolioPage` and `FitGapReportPage`, but full 60-second real-clock timer advancement was not run in the unit suite to keep Vitest execution fast (`~2.7s`).
-3. **Legacy Unscoped Tables Outside Selected Workflow:** Tenant isolation was enforced across `ApplicationController`, `PortfoliosController`, `PortfolioSkillsController`, and `FitGapGeneratorWorker`. Other controllers outside the post-interview evaluation workflow (e.g., `AssessmentsController`) were intentionally left untouched to keep the backend diff focused on the selected scope.
+### 6. Screenshot Status, Manual Viewport Checklist & Known Limitations
+1. **Visual Screenshot Verification Status (`PENDING` — Browser Tool Unavailable in CLI Environment):**
+   - Baseline screenshot artifact from initial discovery: `media_1792345944493_d302e1d0.png` (located in the conversation brain artifact directory).
+   - Because automated browser screenshot tools are unavailable in this terminal-only session, live screenshot capture of the final UI is marked **pending manual capture** prior to final portal submission.
+   - **Precise Manual Visual Verification Checklist (`375px`, `768px`, `1440px`):**
+     - **At `375px` (Mobile):** Open `/assessments/:id/sessions/:sessionId/portfolio` and `/fitgap/:vacancyId`. Verify zero page-level horizontal scroll (`document.documentElement.scrollWidth <= window.innerWidth`), natural wrapping of top navbar and header action buttons, `2-column` `LevelRadio` grid inside an open `OverridePanel`, and contained horizontal scroll inside `ComparisonTable` (`overflow-x-auto`).
+     - **At `768px` (Tablet):** Open `OverridePanel` on any `SkillPortfolioCard` and confirm the full-width card footer keeps the skill title, `Assessed`/`Partial` badge, and `LevelBadge` uncompressed at the top of the card.
+     - **At `1440px` (Desktop):** Verify `max-w-5xl` container alignment between `AssessorLayout` header and main content, `5-column` `LevelRadio` pills, and side-by-side `lg:grid-cols-2` rendering of **Overall Hiring Recommendation** and **Culture & Competency Fit** cards on `FitGapReportPage`.
+2. **Polling Timeout Real-Clock Duration:** Bounded polling (`MAX_POLL_ATTEMPTS = 12` at 5-second intervals = 60 seconds) is implemented in `PortfolioPage` and `FitGapReportPage`, while unit tests verify immediate state transitions without real-clock 60s delays.
+3. **Legacy Unscoped Tables Outside Selected Workflow:** Tenant isolation was enforced across `ApplicationController`, `PortfoliosController`, `PortfolioSkillsController`, and `FitGapGeneratorWorker`. Other controllers outside the post-interview evaluation workflow were intentionally left untouched to keep the backend diff focused on the selected scope.
+
 

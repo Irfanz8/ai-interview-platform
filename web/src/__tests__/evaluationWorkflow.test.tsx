@@ -492,11 +492,17 @@ describe("Evaluation Workflow — Stage 5B Frontend Verification", () => {
         screen.getByText("Demonstrates high ownership and blameless post-mortem culture.")
       ).toBeInTheDocument();
 
+      // Partial coverage notice rendered when not_assessed skills exist
+      expect(
+        screen.getByRole("note", { name: /partial interview coverage notice/i })
+      ).toHaveTextContent(/1 of 4 required role skills lacked sufficient interview turns/i);
+
       // ComparisonTable assertions
       expect(screen.getByText("AI L2 → L4")).toBeInTheDocument();
       expect(
         screen.getByText(/Upgraded to L4 based on payment gateway design\./i)
       ).toBeInTheDocument();
+      expect(screen.getByText("Partial coverage")).toBeInTheDocument();
       expect(screen.getByText("Insufficient evidence")).toBeInTheDocument();
 
       // Summary counts include all 4 categories
@@ -564,6 +570,84 @@ describe("Evaluation Workflow — Stage 5B Frontend Verification", () => {
 
       expect(portfoliosApi.regenerateFitGap).toHaveBeenCalledWith(55, 7);
       expect(await screen.findByText(/generating fit\/gap report/i)).toBeInTheDocument();
+    });
+
+    it("renders LevelBadge and human override provenance on discovered skills in FitGapReportPage and shows Low AI confidence on unoverridden low-confidence skills", async () => {
+      const portfolioWithDiscoveredOverride: Portfolio = {
+        ...samplePortfolio,
+        skills: [
+          ...samplePortfolio.skills,
+          {
+            ...sampleSkillA,
+            id: 103,
+            skill_id: "SK-DISC-001",
+            skill_label: "GraphQL Federation",
+            ai_level: 3,
+            is_discovered: true,
+          },
+        ],
+        overrides: [
+          ...(samplePortfolio.overrides ?? []),
+          {
+            id: 902,
+            portfolio_skill_id: 103,
+            ai_level: 3,
+            override_level: 4,
+            assessor_notes: "Verified production federation gateway ownership.",
+            overridden_by: 1,
+            overridden_at: "2026-10-19T10:00:00Z",
+          },
+        ],
+      };
+
+      const lowConfComparison: SkillComparison[] = [
+        {
+          skill_id: "SK-ENG-002",
+          skill_label: "Database Optimization",
+          required_level: 3,
+          candidate_level: 2,
+          ai_level: 2,
+          is_override: false,
+          confidence: "low",
+          assessment_status: "partial",
+          result: "gap",
+          delta: -1,
+        },
+      ];
+
+      vi.mocked(sessionsApi.getPortfolio).mockResolvedValue(
+        mockAxiosResponse({ portfolio: portfolioWithDiscoveredOverride })
+      );
+      vi.mocked(portfoliosApi.getFitGap).mockResolvedValue(
+        mockAxiosResponse({
+          status: "ready",
+          report: {
+            id: 89,
+            portfolio_id: 55,
+            vacancy_id: 7,
+            overall_fit_score: 70,
+            skill_comparisons: lowConfComparison,
+            narrative: "Solid candidate with partial database coverage.",
+            overall_narrative: "Solid candidate with partial database coverage.",
+            generated_at: "2026-10-19T12:00:00Z",
+          },
+        })
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/assessments/1/sessions/10/fitgap/7"]}>
+          <Routes>
+            <Route
+              path="/assessments/:id/sessions/:sessionId/fitgap/:vacancyId"
+              element={<FitGapReportPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByText("GraphQL Federation")).toBeInTheDocument();
+      expect(screen.getByText(/Human override applied \(AI L3 → L4\)/i)).toBeInTheDocument();
+      expect(screen.getByText("Low AI confidence")).toBeInTheDocument();
     });
   });
 });

@@ -5,11 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import ComparisonTable from "@/components/fitgap/ComparisonTable";
+import LevelBadge from "@/components/portfolio/LevelBadge";
 import { portfoliosApi } from "@/services/portfolios";
 import { sessionsApi } from "@/services/sessions";
 import { vacanciesApi } from "@/services/vacancies";
 import { usePolling } from "@/hooks/usePolling";
-import { ArrowLeft, Download, Loader2, RefreshCw, Zap, AlertCircle, Clock } from "lucide-react";
+import { parseLevel, LEVEL_DESCRIPTIONS } from "@/utils/constants";
+import {
+  ArrowLeft,
+  Download,
+  Loader2,
+  RefreshCw,
+  Zap,
+  AlertCircle,
+  Clock,
+  Info,
+} from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import type { FitGapReport, Portfolio } from "@/types";
 
@@ -222,7 +233,12 @@ export default function FitGapReportPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div
+        role="status"
+        aria-busy="true"
+        aria-label="Loading Fit/Gap report"
+        className="max-w-4xl mx-auto space-y-4"
+      >
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -230,20 +246,23 @@ export default function FitGapReportPage() {
   }
 
   const candidateName = portfolio?.session_summary?.candidate_name ?? null;
+  const comparisons = report?.skill_comparisons ?? [];
+  const notAssessedCount = comparisons.filter((c) => c.result === "not_assessed").length;
+  const totalRequiredCount = comparisons.length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 min-w-0">
           <Link
             to={`/assessments/${id}/sessions/${sessionId}/portfolio`}
             aria-label="Back to candidate portfolio"
-            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Vacancy Alignment Analysis
             </p>
@@ -267,7 +286,7 @@ export default function FitGapReportPage() {
         </div>
 
         {portfolio && !notFoundError && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
@@ -331,7 +350,7 @@ export default function FitGapReportPage() {
 
       {/* Generating */}
       {generating && !timedOut && !notFoundError && (
-        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-12 text-center space-y-3">
+        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-8 sm:p-12 text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
           <div className="space-y-1">
             <p className="font-medium text-sm">Generating fit/gap report...</p>
@@ -344,16 +363,20 @@ export default function FitGapReportPage() {
         </div>
       )}
 
-      {/* Polling Timeout */}
+      {/* Polling Timeout (role="status": not a confirmed backend failure) */}
       {timedOut && !notFoundError && (
-        <div role="alert" className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3"
+        >
           <Clock className="h-6 w-6 text-amber-600 mx-auto" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-amber-900">
-              Fit/Gap report generation is taking longer than expected
+              Fit/Gap report analysis is still processing in the background
             </p>
             <p className="text-xs text-amber-800">
-              Automatic status polling has paused. You can check the current status or restart generation.
+              Automatic status polling has paused because generation is taking longer than usual. You can check the latest status without queueing a duplicate job, or restart generation.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -401,21 +424,54 @@ export default function FitGapReportPage() {
       {/* Report ready */}
       {!generating && !timedOut && !notFoundError && !failedError && report && (
         <>
-          {/* Overall Hiring Recommendation */}
-          {report.overall_narrative && (
-            <Card className="border-primary/25 bg-primary/[0.02]">
+          {/* Partial Coverage Caveat when unassessed skills exist */}
+          {notAssessedCount > 0 && (
+            <div
+              role="note"
+              aria-label="Partial interview coverage notice"
+              className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/50 px-4 py-3 text-xs text-amber-900"
+            >
+              <Info className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="leading-relaxed">
+                <span className="font-semibold">Partial coverage note:</span>{" "}
+                {notAssessedCount} of {totalRequiredCount} required role skill
+                {totalRequiredCount !== 1 ? "s" : ""} lacked sufficient interview turns (0–1 probes) and{" "}
+                {notAssessedCount === 1 ? "is" : "are"} marked{" "}
+                <span className="font-semibold">Not assessed</span> rather than penalized as a confirmed skill gap.
+              </p>
+            </div>
+          )}
+
+          {/* Narratives Grid: Overall Hiring Recommendation & Culture & Competency Fit */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {report.overall_narrative && (
+              <Card className="border-primary/25 bg-primary/[0.02]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold">
+                    Overall Hiring Recommendation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+                    {report.overall_narrative}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className={!report.overall_narrative ? "lg:col-span-2" : undefined}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold">
-                  Overall Hiring Recommendation
+                  Culture &amp; Competency Fit
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
-                  {report.overall_narrative}
+                  {report.culture_narrative || "No separate culture narrative was generated for this report."}
                 </p>
               </CardContent>
             </Card>
-          )}
+          </div>
 
           {/* Skill comparison */}
           <Card>
@@ -424,22 +480,6 @@ export default function FitGapReportPage() {
             </CardHeader>
             <CardContent className="px-4 pb-4">
               <ComparisonTable comparisons={report.skill_comparisons} />
-            </CardContent>
-          </Card>
-
-          <Separator />
-
-          {/* Culture & competency */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">
-                Culture &amp; Competency Fit
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
-                {report.culture_narrative || "No separate culture narrative was generated for this report."}
-              </p>
             </CardContent>
           </Card>
 
@@ -454,20 +494,41 @@ export default function FitGapReportPage() {
                     Discovered Skills (not in vacancy requirements)
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-2">
+                <CardContent className="px-4 pb-4 space-y-2.5">
                   {portfolio.skills
                     .filter((s) => s.is_discovered)
-                    .map((s) => (
-                      <div key={s.id} className="text-sm flex flex-wrap items-center gap-2">
-                        <span className="font-medium break-words">{s.skill_label}</span>
-                        <span className="text-muted-foreground">
-                          {s.ai_level} ({s.ai_confidence?.toLowerCase() === "low" ? "low confidence" : "confirmed"})
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          — Not required for this role, may be additive.
-                        </span>
-                      </div>
-                    ))}
+                    .map((s) => {
+                      const override = portfolio.overrides.find(
+                        (o) => o.portfolio_skill_id === s.id
+                      );
+                      const effectiveLevel =
+                        override?.override_level ?? parseLevel(s.ai_level);
+                      return (
+                        <div
+                          key={s.id}
+                          className="text-sm flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/20 px-3 py-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <LevelBadge level={effectiveLevel} size="sm" />
+                            <span className="font-medium break-words">
+                              {s.skill_label}
+                            </span>
+                            {LEVEL_DESCRIPTIONS[effectiveLevel] && (
+                              <span className="text-xs text-muted-foreground">
+                                ({LEVEL_DESCRIPTIONS[effectiveLevel]})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {override
+                              ? `Human override applied (AI L${parseLevel(s.ai_level)} → L${effectiveLevel})`
+                              : s.ai_confidence?.toLowerCase() === "low"
+                              ? "Low AI confidence"
+                              : "Assessed outside role rubric"}
+                          </span>
+                        </div>
+                      );
+                    })}
                 </CardContent>
               </Card>
             </>
@@ -477,5 +538,6 @@ export default function FitGapReportPage() {
     </div>
   );
 }
+
 
 

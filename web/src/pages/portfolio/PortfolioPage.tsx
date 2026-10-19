@@ -207,7 +207,12 @@ export default function PortfolioPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div
+        role="status"
+        aria-busy="true"
+        aria-label="Loading candidate portfolio"
+        className="max-w-4xl mx-auto space-y-4"
+      >
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -219,20 +224,21 @@ export default function PortfolioPage() {
   const discoveredSkills = portfolio?.skills.filter((s) => s.is_discovered) ?? [];
   const resolvedCandidateName =
     candidateName || portfolio?.session_summary?.candidate_name || null;
+  const activeOverrideCount = Object.keys(overrides).length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 min-w-0">
           <Link
             to={`/assessments/${id}/invite`}
             aria-label="Back to assessment invites"
-            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Candidate Assessment Review
             </p>
@@ -253,10 +259,10 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
             to={`/assessments/${id}/sessions/${sessionId}/transcript`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium border rounded-md px-3 h-8 hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium border bg-background rounded-md px-3 h-8 hover:bg-accent transition-colors"
           >
             <FileText className="h-3.5 w-3.5" />
             Transcript
@@ -310,7 +316,7 @@ export default function PortfolioPage() {
 
       {/* Generating state */}
       {generating && !timedOut && (
-        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-12 text-center space-y-3">
+        <div role="status" aria-live="polite" className="border rounded-lg bg-card p-8 sm:p-12 text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
           <div>
             <p className="font-medium">Generating portfolio...</p>
@@ -321,16 +327,20 @@ export default function PortfolioPage() {
         </div>
       )}
 
-      {/* Polling Timeout state */}
+      {/* Polling Timeout state (role="status": not a confirmed backend failure) */}
       {timedOut && (
-        <div role="alert" className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border border-amber-300 bg-amber-50/60 rounded-lg p-6 text-center space-y-3"
+        >
           <Clock className="h-6 w-6 text-amber-600 mx-auto" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-amber-900">
-              Portfolio generation is taking longer than expected
+              Portfolio analysis is still processing in the background
             </p>
             <p className="text-xs text-amber-800">
-              Automatic status polling has paused. You can check the current status or restart generation.
+              Automatic status polling has paused because analysis is taking longer than usual. You can check the latest status without starting a duplicate job, or restart generation.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -378,7 +388,7 @@ export default function PortfolioPage() {
       )}
 
       {/* Ready state */}
-      {!generating && !timedOut && !notFoundError && !failedError && portfolio?.generation_status === "complete" && (
+      {!generating && !timedOut && !notFoundError && portfolio?.generation_status === "complete" && (
         <>
           {/* Session Coverage Banner */}
           {portfolio.session_summary && (
@@ -387,13 +397,20 @@ export default function PortfolioPage() {
 
           {/* Configured skills */}
           <section aria-label="Assessed configured skills" className="space-y-3">
-            <div className="space-y-0.5">
-              <h2 className="text-sm font-semibold">
-                Assessed Configured Skills ({configuredAssessedSkills.length})
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Skills that reached 2+ interview probes with behavioral evidence. Assessors can override any AI rating with a documented rationale.
-              </p>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="space-y-0.5">
+                <h2 className="text-sm font-semibold">
+                  Assessed Configured Skills ({configuredAssessedSkills.length})
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Skills that reached 2+ interview probes with behavioral evidence. Assessors can override any AI rating with a documented rationale.
+                </p>
+              </div>
+              {activeOverrideCount > 0 && (
+                <span className="inline-flex items-center text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  {activeOverrideCount} human override{activeOverrideCount !== 1 ? "s" : ""} active
+                </span>
+              )}
             </div>
             {configuredAssessedSkills.length === 0 ? (
               <div className="border border-dashed rounded-lg p-5 text-xs text-muted-foreground text-center">
@@ -482,7 +499,7 @@ export default function PortfolioPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button onClick={handleRunFitGap} disabled={!selectedVacancy}>
+                  <Button onClick={handleRunFitGap} disabled={!selectedVacancy} className="w-full sm:w-auto">
                     Run Fit/Gap Analysis →
                   </Button>
                 </div>
@@ -494,5 +511,6 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
 
 

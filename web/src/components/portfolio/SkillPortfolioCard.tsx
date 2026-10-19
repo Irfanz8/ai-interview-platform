@@ -42,56 +42,46 @@ export default function SkillPortfolioCard({
       )}
     >
       <CardContent className="p-4 sm:p-5 space-y-4">
-        {/* 1. Skill name -> effective rating -> provenance & confidence -> action */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <LevelBadge level={effectiveLevel} />
-            <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold leading-snug text-foreground break-words">
-                  {skill.skill_label}
-                </h3>
-                {skill.is_discovered && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                    <Zap className="h-3 w-3" aria-hidden="true" /> Discovered
-                  </span>
-                )}
-                {skill.coverage_state === "covered" && (
-                  <span className="inline-flex items-center text-xs font-medium text-teal-800 bg-teal-50 border border-teal-200/70 px-2 py-0.5 rounded-full">
-                    Covered
-                    {skill.probe_count != null ? ` (${skill.probe_count} probes)` : ""}
-                  </span>
-                )}
-                {skill.coverage_state === "partial" && (
-                  <span className="inline-flex items-center text-xs font-medium text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                    Partially assessed
-                    {skill.probe_count != null ? ` (${skill.probe_count} probes)` : ""}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <ConfidenceIndicator confidence={skill.ai_confidence} />
-                {override ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    <UserCheck className="h-3 w-3" aria-hidden="true" />
-                    Human override active
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    AI-generated rating
-                  </span>
-                )}
-              </div>
+        {/* 1. Skill name -> effective rating -> provenance & confidence */}
+        <div className="flex items-start gap-3.5 min-w-0">
+          <LevelBadge level={effectiveLevel} />
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-semibold leading-snug text-foreground break-words">
+                {skill.skill_label}
+              </h3>
+              {skill.is_discovered && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                  <Zap className="h-3 w-3" aria-hidden="true" /> Discovered
+                </span>
+              )}
+              {skill.coverage_state === "covered" && (
+                <span className="inline-flex items-center text-xs font-medium text-teal-800 bg-teal-50 border border-teal-200/70 px-2 py-0.5 rounded-full">
+                  Covered
+                  {skill.probe_count != null ? ` (${skill.probe_count} probes)` : ""}
+                </span>
+              )}
+              {skill.coverage_state === "partial" && (
+                <span className="inline-flex items-center text-xs font-medium text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                  Partially assessed
+                  {skill.probe_count != null ? ` (${skill.probe_count} probes)` : ""}
+                </span>
+              )}
             </div>
-          </div>
 
-          <div className="shrink-0">
-            <OverridePanel
-              skill={skill}
-              existingOverride={override}
-              onSaved={onOverrideSaved}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <ConfidenceIndicator confidence={skill.ai_confidence} />
+              {override ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <UserCheck className="h-3 w-3" aria-hidden="true" />
+                  Human override active
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  AI-generated rating
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -160,8 +150,18 @@ export default function SkillPortfolioCard({
             </ul>
           </div>
         )}
+
+        {/* 5. Override Action Footer / Expandable Form */}
+        <div className="pt-3 border-t border-border/60">
+          <OverridePanel
+            skill={skill}
+            existingOverride={override}
+            onSaved={onOverrideSaved}
+          />
+        </div>
       </CardContent>
     </Card>
   );
 }
+
 
